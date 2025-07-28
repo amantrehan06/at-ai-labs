@@ -171,6 +171,58 @@
             font-size: 0.9rem;
         }
 
+        .streaming-toggle {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 2px solid #e1e5e9;
+            margin-bottom: 20px;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 60px;
+            height: 30px;
+            background: #ccc;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .toggle-switch.active {
+            background: #667eea;
+        }
+
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 26px;
+            height: 26px;
+            background: white;
+            border-radius: 50%;
+            transition: transform 0.3s ease;
+        }
+
+        .toggle-switch.active::after {
+            transform: translateX(30px);
+        }
+
+        .toggle-label {
+            font-weight: 600;
+            color: #555;
+        }
+
+        .toggle-description {
+            font-size: 0.85rem;
+            color: #666;
+            margin-top: 5px;
+        }
+
         .action-buttons {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -258,6 +310,14 @@
             border-radius: 8px;
         }
 
+        .streaming {
+            color: #0056b3;
+            background: #e7f3ff;
+            border: 1px solid #b3d9ff;
+            padding: 15px;
+            border-radius: 8px;
+        }
+
         .status-bar {
             background: rgba(255,255,255,0.1);
             padding: 15px;
@@ -327,7 +387,7 @@
                 <div class="form-group">
                     <label for="aiService">🤖 AI Service</label>
                     <div class="service-selector">
-                        <div class="service-option selected" data-service="auto">
+                        <div class="service-option" data-service="auto">
                             <span class="icon">🚀</span>
                             <span class="name">Auto</span>
                         </div>
@@ -335,7 +395,7 @@
                             <span class="icon">🤖</span>
                             <span class="name">OpenAI</span>
                         </div>
-                        <div class="service-option" data-service="GroqAIChatService">
+                        <div class="service-option selected" data-service="GroqAIChatService">
                             <span class="icon">🦙</span>
                             <span class="name">Llama</span>
                         </div>
@@ -343,10 +403,21 @@
                 </div>
 
                 <div class="form-group">
+                    <label>⚡ Response Mode</label>
+                    <div class="streaming-toggle">
+                        <div class="toggle-switch" id="streamingToggle"></div>
+                        <div>
+                            <div class="toggle-label">Real-time Streaming</div>
+                            <div class="toggle-description">See responses as they're generated (recommended)</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
                     <label for="apiKey">🔑 API Key (Optional)</label>
-                    <input type="password" id="apiKey" placeholder="Enter your API key to override default">
+                    <input type="password" id="apiKey" placeholder="Enter your Groq API key (starts with gsk_)">
                     <small id="apiKeyHelp" style="color: #666; font-size: 12px; margin-top: 5px; display: block;">
-                        Optional: Leave empty to use default keys
+                        Optional: Leave empty to use default key<br>Get it from: https://console.groq.com/keys
                     </small>
                 </div>
 
@@ -397,6 +468,7 @@
     <script>
         const API_BASE = window.location.origin + '/api/v1/code';
         let availableServices = [];
+        let eventSource = null;
         
         // Service selector functionality
         document.querySelectorAll('.service-option').forEach(option => {
@@ -407,6 +479,12 @@
                 const selectedService = this.dataset.service;
                 updateApiKeyHelp(selectedService);
             });
+        });
+
+        // Streaming toggle functionality
+        const streamingToggle = document.getElementById('streamingToggle');
+        streamingToggle.addEventListener('click', function() {
+            this.classList.toggle('active');
         });
 
         function updateApiKeyHelp(selectedService) {
@@ -427,6 +505,7 @@
         
         async function analyzeCode(type) {
             const selectedService = document.querySelector('.service-option.selected').dataset.service;
+            const isStreaming = document.getElementById('streamingToggle').classList.contains('active');
             const apiKey = document.getElementById('apiKey').value;
             const language = document.getElementById('language').value;
             const code = document.getElementById('code').value;
@@ -437,6 +516,21 @@
                 return;
             }
             
+            // Close any existing event source
+            if (eventSource) {
+                eventSource.close();
+                eventSource = null;
+            }
+            
+            if (isStreaming) {
+                await analyzeCodeStreaming(type, selectedService, apiKey, language, code);
+            } else {
+                await analyzeCodeRegular(type, selectedService, apiKey, language, code);
+            }
+        }
+        
+        async function analyzeCodeRegular(type, selectedService, apiKey, language, code) {
+            const resultDiv = document.getElementById('result');
             showResult('⏳ Analyzing code...', 'loading');
             
             try {
@@ -480,6 +574,75 @@
             }
         }
         
+        async function analyzeCodeStreaming(type, selectedService, apiKey, language, code) {
+            const resultDiv = document.getElementById('result');
+            showResult('⏳ Starting streaming analysis...', 'loading');
+            
+            try {
+                let url = `${API_BASE}/${type}/stream`;
+                
+                if (selectedService !== 'auto') {
+                    url = `${API_BASE}/analyze/${selectedService}/stream`;
+                }
+                
+                const analysisType = type.toUpperCase();
+                
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        code: code,
+                        language: language,
+                        analysisType: analysisType,
+                        apiKey: apiKey
+                    })
+                });
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
+                }
+                
+                // Handle Server-Sent Events
+                eventSource = new EventSource(url);
+                let streamingContent = '';
+                
+                eventSource.onmessage = function(event) {
+                    try {
+                        const data = JSON.parse(event.data);
+                        
+                        if (data.eventType === 'content') {
+                            streamingContent += data.content;
+                            showResult(`🔄 ${type.toUpperCase()} Analysis (Streaming):\n\n${streamingContent}`, 'streaming');
+                        } else if (data.eventType === 'complete') {
+                            showResult(`✅ ${type.toUpperCase()} Analysis (Complete):\n\n${streamingContent}`, 'success');
+                            eventSource.close();
+                            eventSource = null;
+                        } else if (data.eventType === 'error') {
+                            showResult(`❌ Error: ${data.error}`, 'error');
+                            eventSource.close();
+                            eventSource = null;
+                        }
+                    } catch (error) {
+                        showResult(`❌ Error parsing streaming response: ${error.message}`, 'error');
+                        eventSource.close();
+                        eventSource = null;
+                    }
+                };
+                
+                eventSource.onerror = function(error) {
+                    showResult(`❌ Streaming error: ${error}`, 'error');
+                    eventSource.close();
+                    eventSource = null;
+                };
+                
+            } catch (error) {
+                showResult(`❌ Error: ${error.message}`, 'error');
+            }
+        }
+        
         function showResult(message, type) {
             const resultDiv = document.getElementById('result');
             resultDiv.className = `result-content ${type}`;
@@ -516,6 +679,9 @@
         window.onload = async function() {
             await loadServiceStats();
             await loadAvailableServices();
+            
+            // Set default streaming to true
+            document.getElementById('streamingToggle').classList.add('active');
         };
     </script>
 </body>
