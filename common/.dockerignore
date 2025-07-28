@@ -1,0 +1,42 @@
+# Git
+.git
+.gitignore
+
+# IDE
+.idea
+*.iml
+.vscode
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Maven
+target/
+*.jar
+*.war
+
+# Logs
+*.log
+
+# Environment files
+.env
+.env.local
+
+# Documentation
+README.md
+docs/
+
+# Scripts
+scripts/
+deploy.sh
+
+# Infrastructure
+infrastructure/
+
+# Frontend (if any)
+frontend/
+
+# Test files
+**/test/
+**/tests/ 

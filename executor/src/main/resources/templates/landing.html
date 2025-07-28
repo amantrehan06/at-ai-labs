@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AT AI Labs - AI-Powered Development Tools</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            padding: 40px 0;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            margin-bottom: 30px;
+        }
+
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 30px;
+            margin-top: 40px;
+        }
+
+        .service-card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .service-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        }
+
+        .service-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+        }
+
+        .service-icon {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            display: block;
+        }
+
+        .service-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .service-description {
+            color: #666;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        .service-features {
+            list-style: none;
+            margin-bottom: 25px;
+        }
+
+        .service-features li {
+            padding: 5px 0;
+            color: #555;
+        }
+
+        .service-features li::before {
+            content: '✅ ';
+            margin-right: 8px;
+        }
+
+        .service-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 12px 30px;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: bold;
+            transition: transform 0.2s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .service-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        .coming-soon {
+            background: #f8f9fa;
+            border: 2px dashed #dee2e6;
+            opacity: 0.7;
+        }
+
+        .coming-soon .service-button {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 40px 0;
+            color: white;
+            opacity: 0.8;
+        }
+
+        .tech-stack {
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 40px;
+            backdrop-filter: blur(10px);
+        }
+
+        .tech-stack h3 {
+            margin-bottom: 15px;
+            color: white;
+        }
+
+        .tech-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .tech-tag {
+            background: rgba(255,255,255,0.2);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            color: white;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .services-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 AT AI Labs</h1>
+            <p>AI-Powered Development Tools for Modern Software Engineering</p>
+        </div>
+
+        <div class="services-grid">
+            <!-- Code Assistant Service -->
+            <div class="service-card">
+                <span class="service-icon">💻</span>
+                <h2 class="service-title">Code Assistant</h2>
+                <p class="service-description">
+                    Intelligent code analysis and assistance powered by advanced AI models. 
+                    Get explanations, refactoring suggestions, debugging help, and comprehensive code analysis.
+                </p>
+                <ul class="service-features">
+                    <li>Code explanation and documentation</li>
+                    <li>Refactoring suggestions and improvements</li>
+                    <li>Bug detection and debugging tips</li>
+                    <li>Comprehensive code analysis</li>
+                    <li>Support for 14+ programming languages</li>
+                    <li>Multiple AI providers (OpenAI GPT, Llama)</li>
+                </ul>
+                <a href="/code-assistant" class="service-button">Try Code Assistant</a>
+            </div>
+
+            <!-- AI Chat Service -->
+            <div class="service-card">
+                <span class="service-icon">💬</span>
+                <h2 class="service-title">AI Chat Assistant</h2>
+                <p class="service-description">
+                    Conversational AI assistant for technical discussions, problem-solving, 
+                    and knowledge sharing. Perfect for developers and technical teams.
+                </p>
+                <ul class="service-features">
+                    <li>Natural language conversations</li>
+                    <li>Technical problem solving</li>
+                    <li>Knowledge sharing and learning</li>
+                    <li>Context-aware responses</li>
+                    <li>Multi-turn conversations</li>
+                    <li>Integration with development workflows</li>
+                </ul>
+                <a href="/ai-chat" class="service-button">Try AI Chat</a>
+            </div>
+
+            <!-- Code Generator Service -->
+            <div class="service-card">
+                <span class="service-icon">⚡</span>
+                <h2 class="service-title">Code Generator</h2>
+                <p class="service-description">
+                    Generate production-ready code from natural language descriptions. 
+                    Create APIs, functions, classes, and complete applications with AI assistance.
+                </p>
+                <ul class="service-features">
+                    <li>Natural language to code conversion</li>
+                    <li>API generation from specifications</li>
+                    <li>Database schema generation</li>
+                    <li>Test case generation</li>
+                    <li>Multiple framework support</li>
+                    <li>Best practices integration</li>
+                </ul>
+                <a href="/code-generator" class="service-button">Try Code Generator</a>
+            </div>
+
+            <!-- Documentation Generator (Coming Soon) -->
+            <div class="service-card coming-soon">
+                <span class="service-icon">📚</span>
+                <h2 class="service-title">Documentation Generator</h2>
+                <p class="service-description">
+                    Automatically generate comprehensive documentation from your codebase. 
+                    Create API docs, README files, and technical documentation with AI.
+                </p>
+                <ul class="service-features">
+                    <li>Automatic API documentation</li>
+                    <li>README file generation</li>
+                    <li>Code comment enhancement</li>
+                    <li>Technical specification docs</li>
+                    <li>Multiple format support</li>
+                    <li>Version control integration</li>
+                </ul>
+                <a href="#" class="service-button">Coming Soon</a>
+            </div>
+        </div>
+
+        <div class="tech-stack">
+            <h3>🛠️ Built With Modern Technologies</h3>
+            <div class="tech-tags">
+                <span class="tech-tag">Java 17</span>
+                <span class="tech-tag">Spring Boot</span>
+                <span class="tech-tag">LangChain4j</span>
+                <span class="tech-tag">OpenAI API</span>
+                <span class="tech-tag">Google Cloud Run</span>
+                <span class="tech-tag">Docker</span>
+                <span class="tech-tag">REST API</span>
+                <span class="tech-tag">Strategy Pattern</span>
+                <span class="tech-tag">Factory Pattern</span>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>© 2025 AT AI Labs - Empowering developers with AI-driven tools</p>
+            <p>Built with ❤️ for the developer community</p>
+        </div>
+    </div>
+</body>
+</html> 

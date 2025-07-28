@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Code Generator - AT AI Labs</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            padding: 30px 0;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            margin-bottom: 20px;
+        }
+
+        .back-button {
+            display: inline-block;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .back-button:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-top: 30px;
+        }
+
+        .input-section, .output-section {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .input-section::before, .output-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+        }
+
+        .section-title {
+            font-size: 1.3rem;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+            font-size: 0.95rem;
+        }
+
+        .form-input, .form-select, .form-textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            background: #f8f9fa;
+        }
+
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-textarea {
+            height: 200px;
+            resize: vertical;
+            font-family: 'Courier New', monospace;
+            line-height: 1.5;
+        }
+
+        .generate-button {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            width: 100%;
+        }
+
+        .generate-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        .generate-button:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .status-bar {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+            color: white;
+        }
+
+        .status-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .status-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .status-label {
+            font-weight: 600;
+        }
+
+        .status-value {
+            font-weight: 400;
+        }
+
+        .code-output {
+            background: #f8f9fa;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            padding: 20px;
+            min-height: 300px;
+            font-family: 'Courier New', monospace;
+            line-height: 1.6;
+            color: #333;
+            white-space: pre-wrap;
+            overflow-y: auto;
+        }
+
+        .loading {
+            text-align: center;
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .loading::after {
+            content: '';
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #667eea;
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 1s linear infinite;
+            margin-left: 10px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .error {
+            color: #dc3545;
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            padding: 15px;
+            border-radius: 8px;
+        }
+
+        .success {
+            color: #155724;
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            padding: 15px;
+            border-radius: 8px;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <a href="/" class="back-button">← Back to Services</a>
+            <h1>⚡ Code Generator</h1>
+            <p>AI-powered code generation from natural language descriptions</p>
+        </div>
+
+        <div class="status-bar">
+            <div class="status-item">
+                <span class="status-label">Module Status:</span>
+                <span class="status-value" id="moduleStatus">Checking...</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">AI Services:</span>
+                <span class="status-value" id="aiServices">Checking...</span>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="input-section">
+                <h2 class="section-title">📝 Code Description</h2>
+                
+                <div class="form-group">
+                    <label for="language" class="form-label">💻 Programming Language</label>
+                    <select id="language" class="form-select">
+                        <option value="java">Java</option>
+                        <option value="python">Python</option>
+                        <option value="javascript">JavaScript</option>
+                        <option value="typescript">TypeScript</option>
+                        <option value="cpp">C++</option>
+                        <option value="csharp">C#</option>
+                        <option value="php">PHP</option>
+                        <option value="ruby">Ruby</option>
+                        <option value="go">Go</option>
+                        <option value="rust">Rust</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="framework" class="form-label">🏗️ Framework (Optional)</label>
+                    <select id="framework" class="form-select">
+                        <option value="">None</option>
+                        <option value="spring">Spring Boot</option>
+                        <option value="react">React</option>
+                        <option value="vue">Vue.js</option>
+                        <option value="angular">Angular</option>
+                        <option value="express">Express.js</option>
+                        <option value="django">Django</option>
+                        <option value="flask">Flask</option>
+                        <option value="fastapi">FastAPI</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="description" class="form-label">📄 Describe what you want to generate</label>
+                    <textarea id="description" class="form-textarea" placeholder="Describe the code you want to generate. For example:&#10;&#10;Create a REST API endpoint that accepts a user object with name, email, and age fields. The endpoint should validate the input and return a success response with the user ID.&#10;&#10;Or:&#10;&#10;Generate a function that calculates the factorial of a number using recursion.&#10;&#10;Or:&#10;&#10;Create a class for managing a shopping cart with methods to add items, remove items, and calculate the total price."></textarea>
+                </div>
+
+                <button class="generate-button" onclick="generateCode()">🚀 Generate Code</button>
+            </div>
+
+            <div class="output-section">
+                <h2 class="section-title">📊 Generated Code</h2>
+                <div class="code-output" id="codeOutput">
+                    Enter a description and click "Generate Code" to get started...
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Check module health
+        async function checkHealth() {
+            try {
+                const response = await fetch('/code-generator/api/health');
+                if (response.ok) {
+                    const data = await response.json();
+                    document.getElementById('moduleStatus').textContent = '🟢 Online';
+                    document.getElementById('aiServices').textContent = '🟢 Available';
+                } else {
+                    document.getElementById('moduleStatus').textContent = '🔴 Offline';
+                    document.getElementById('aiServices').textContent = '🔴 Unavailable';
+                }
+            } catch (error) {
+                document.getElementById('moduleStatus').textContent = '🔴 Offline';
+                document.getElementById('aiServices').textContent = '🔴 Error';
+            }
+        }
+
+        // Generate code
+        async function generateCode() {
+            const language = document.getElementById('language').value;
+            const framework = document.getElementById('framework').value;
+            const description = document.getElementById('description').value;
+            const outputDiv = document.getElementById('codeOutput');
+            
+            if (!description.trim()) {
+                outputDiv.className = 'code-output error';
+                outputDiv.textContent = '❌ Please enter a description of the code you want to generate.';
+                return;
+            }
+            
+            outputDiv.className = 'code-output loading';
+            outputDiv.textContent = '⏳ Generating code...';
+            
+            try {
+                const response = await fetch('/code-generator/api/generate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        language: language,
+                        framework: framework,
+                        description: description
+                    })
+                });
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
+                }
+                
+                const data = await response.json();
+                
+                outputDiv.className = 'code-output success';
+                outputDiv.textContent = `✅ Code Generated Successfully!\n\n${data.generatedCode}`;
+                
+            } catch (error) {
+                outputDiv.className = 'code-output error';
+                outputDiv.textContent = `❌ Error: ${error.message}`;
+            }
+        }
+
+        // Initialize on page load
+        window.onload = function() {
+            checkHealth();
+        };
+    </script>
+</body>
+</html> 
