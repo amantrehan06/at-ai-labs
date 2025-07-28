@@ -1,0 +1,18 @@
+# Development Configuration Template
+# Copy this file to application-dev.properties and fill in your API keys
+# DO NOT COMMIT application-dev.properties to version control
+
+# OpenAI Configuration
+openai.api.key=your_openai_api_key_here
+openai.model=gpt-3.5-turbo
+
+# Groq Configuration (for Llama models)
+groq.api.key=your_groq_api_key_here
+groq.model=llama3-8b-8192
+
+# Server Configuration
+server.port=8080
+
+# Logging
+logging.level.com.codeassistant=DEBUG
+logging.level.org.springframework.web=INFO 
