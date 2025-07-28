@@ -468,7 +468,6 @@
     <script>
         const API_BASE = window.location.origin + '/api/v1/code';
         let availableServices = [];
-        let eventSource = null;
         
         // Service selector functionality
         document.querySelectorAll('.service-option').forEach(option => {
@@ -514,12 +513,6 @@
             if (!code.trim()) {
                 showResult('❌ Please enter some code to analyze', 'error');
                 return;
-            }
-            
-            // Close any existing event source
-            if (eventSource) {
-                eventSource.close();
-                eventSource = null;
             }
             
             if (isStreaming) {
@@ -605,38 +598,52 @@
                     throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
                 }
                 
-                // Handle Server-Sent Events
-                eventSource = new EventSource(url);
+                // Handle Server-Sent Events using ReadableStream
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
                 let streamingContent = '';
                 
-                eventSource.onmessage = function(event) {
-                    try {
-                        const data = JSON.parse(event.data);
+                try {
+                    while (true) {
+                        const { done, value } = await reader.read();
                         
-                        if (data.eventType === 'content') {
-                            streamingContent += data.content;
-                            showResult(`🔄 ${type.toUpperCase()} Analysis (Streaming):\n\n${streamingContent}`, 'streaming');
-                        } else if (data.eventType === 'complete') {
-                            showResult(`✅ ${type.toUpperCase()} Analysis (Complete):\n\n${streamingContent}`, 'success');
-                            eventSource.close();
-                            eventSource = null;
-                        } else if (data.eventType === 'error') {
-                            showResult(`❌ Error: ${data.error}`, 'error');
-                            eventSource.close();
-                            eventSource = null;
+                        if (done) {
+                            break;
                         }
-                    } catch (error) {
-                        showResult(`❌ Error parsing streaming response: ${error.message}`, 'error');
-                        eventSource.close();
-                        eventSource = null;
+                        
+                        const chunk = decoder.decode(value, { stream: true });
+                        const lines = chunk.split('\n');
+                        
+                        for (const line of lines) {
+                            if (line.startsWith('data:')) {
+                                try {
+                                    const data = JSON.parse(line.slice(5));
+                                    
+                                    if (data.eventType === 'content') {
+                                        streamingContent += data.content;
+                                        showResult(`🔄 ${type.toUpperCase()} Analysis (Streaming):\n\n${streamingContent}`, 'streaming');
+                                    } else if (data.eventType === 'complete') {
+                                        showResult(`✅ ${type.toUpperCase()} Analysis (Complete):\n\n${streamingContent}`, 'success');
+                                        return;
+                                    } else if (data.eventType === 'error') {
+                                        showResult(`❌ Error: ${data.error}`, 'error');
+                                        return;
+                                    }
+                                } catch (parseError) {
+                                    console.log('Could not parse SSE data:', line);
+                                }
+                            }
+                        }
                     }
-                };
-                
-                eventSource.onerror = function(error) {
-                    showResult(`❌ Streaming error: ${error}`, 'error');
-                    eventSource.close();
-                    eventSource = null;
-                };
+                    
+                    // If we reach here, show the final result
+                    showResult(`✅ ${type.toUpperCase()} Analysis (Complete):\n\n${streamingContent}`, 'success');
+                    
+                } catch (streamError) {
+                    showResult(`❌ Streaming error: ${streamError.message}`, 'error');
+                } finally {
+                    reader.releaseLock();
+                }
                 
             } catch (error) {
                 showResult(`❌ Error: ${error.message}`, 'error');
