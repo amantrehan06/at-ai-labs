@@ -43,6 +43,8 @@ public final class AIServiceConstants {
     // Cache Keys
     public static final String OPENAI_CACHE_PREFIX = "openai-";
     public static final String GROQ_CACHE_PREFIX = "groq-";
+    public static final String OPENAI_STREAMING_CACHE_PREFIX = "openai-streaming-";
+    public static final String GROQ_STREAMING_CACHE_PREFIX = "groq-streaming-";
 
     // Timeout Configuration
     public static final int DEFAULT_TIMEOUT_SECONDS = 60;

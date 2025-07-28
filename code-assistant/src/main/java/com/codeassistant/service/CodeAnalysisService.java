@@ -2,6 +2,7 @@ package com.codeassistant.service;
 
 import com.codeassistant.model.AnalysisRequest;
 import com.codeassistant.model.AnalysisResponse;
+import com.codeassistant.model.StreamingAnalysisResponse;
 import com.codeassistant.service.ai.AIChatService;
 import com.codeassistant.service.ai.AIServiceException;
 import com.codeassistant.service.factory.AIServiceFactory;
@@ -9,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
 
 /**
  * Main service for code analysis that uses the Strategy pattern with Factory pattern.
@@ -77,6 +79,59 @@ public class CodeAnalysisService {
         } catch (Exception e) {
             logger.error("Unexpected error during code analysis", e);
             throw new AIServiceException("Unexpected error during code analysis: " + e.getMessage(), e);
+        }
+    }
+    
+    /**
+     * Streams code analysis using the best available AI service.
+     * 
+     * @param request The analysis request
+     * @return Flux of StreamingAnalysisResponse for real-time streaming
+     * @throws AIServiceException if no AI service is available
+     */
+    public Flux<StreamingAnalysisResponse> streamAnalysis(AnalysisRequest request) throws AIServiceException {
+        logger.debug("Streaming analysis with request: {}", request);
+        
+        try {
+            AIChatService service = aiServiceFactory.getBestAvailableService();
+            logger.info("Using AI service for streaming: {}", service.getClass().getSimpleName());
+            
+            Flux<StreamingAnalysisResponse> response = service.streamAnalysis(request);
+            logger.debug("Streaming analysis started successfully");
+            return response;
+        } catch (AIServiceException e) {
+            logger.error("AI service failed to stream analysis", e);
+            throw e;
+        } catch (Exception e) {
+            logger.error("Unexpected error during streaming analysis", e);
+            throw new AIServiceException("Unexpected error during streaming analysis: " + e.getMessage(), e);
+        }
+    }
+    
+    /**
+     * Streams code analysis using a specific AI service.
+     * 
+     * @param request The analysis request
+     * @param serviceName The name of the service to use (e.g., "OpenAIChatService", "LlamaAIChatService")
+     * @return Flux of StreamingAnalysisResponse for real-time streaming
+     * @throws AIServiceException if the service is not available
+     */
+    public Flux<StreamingAnalysisResponse> streamAnalysis(AnalysisRequest request, String serviceName) throws AIServiceException {
+        logger.debug("Streaming analysis with request: {} using service: {}", request, serviceName);
+        
+        try {
+            AIChatService service = aiServiceFactory.getService(serviceName);
+            logger.info("Using specific AI service for streaming: {}", service.getClass().getSimpleName());
+            
+            Flux<StreamingAnalysisResponse> response = service.streamAnalysis(request);
+            logger.debug("Streaming analysis started successfully");
+            return response;
+        } catch (AIServiceException e) {
+            logger.error("AI service failed to stream analysis", e);
+            throw e;
+        } catch (Exception e) {
+            logger.error("Unexpected error during streaming analysis", e);
+            throw new AIServiceException("Unexpected error during streaming analysis: " + e.getMessage(), e);
         }
     }
     

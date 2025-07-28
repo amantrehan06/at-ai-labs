@@ -2,6 +2,7 @@ package com.codeassistant.controller;
 
 import com.codeassistant.model.AnalysisRequest;
 import com.codeassistant.model.AnalysisResponse;
+import com.codeassistant.model.StreamingAnalysisResponse;
 import com.codeassistant.service.CodeAnalysisService;
 import com.codeassistant.service.ai.AIChatService;
 import com.codeassistant.service.ai.AIServiceException;
@@ -9,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -81,6 +83,58 @@ public class CodeAnalysisController {
     }
     
     /**
+     * Streaming analyze endpoint that provides Server-Sent Events (SSE)
+     */
+    @PostMapping(value = "/analyze/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public ResponseEntity<org.springframework.web.servlet.mvc.method.annotation.SseEmitter> streamAnalyze(@Valid @RequestBody AnalysisRequest request) {
+        org.springframework.web.servlet.mvc.method.annotation.SseEmitter emitter = new org.springframework.web.servlet.mvc.method.annotation.SseEmitter();
+        
+        try {
+            logger.info("Received streaming analysis request: {}", request.getAnalysisType());
+            
+            codeAnalysisService.streamAnalysis(request)
+                .subscribe(
+                    response -> {
+                        try {
+                            emitter.send(response);
+                        } catch (Exception e) {
+                            logger.error("Error sending SSE event", e);
+                            emitter.completeWithError(e);
+                        }
+                    },
+                    error -> {
+                        logger.error("Error in streaming analysis", error);
+                        try {
+                            StreamingAnalysisResponse errorResponse = StreamingAnalysisResponse.error(
+                                error.getMessage(), request.getAnalysisType(), request.getLanguage());
+                            emitter.send(errorResponse);
+                            emitter.complete();
+                        } catch (Exception e) {
+                            emitter.completeWithError(e);
+                        }
+                    },
+                    () -> {
+                        logger.debug("Streaming analysis completed");
+                        emitter.complete();
+                    }
+                );
+                
+        } catch (Exception e) {
+            logger.error("Error setting up streaming analysis", e);
+            try {
+                StreamingAnalysisResponse errorResponse = StreamingAnalysisResponse.error(
+                    e.getMessage(), request.getAnalysisType(), request.getLanguage());
+                emitter.send(errorResponse);
+                emitter.complete();
+            } catch (Exception ex) {
+                emitter.completeWithError(ex);
+            }
+        }
+        
+        return ResponseEntity.ok(emitter);
+    }
+    
+    /**
      * Analyze with specific AI service
      */
     @PostMapping("/analyze/{service}")
@@ -113,12 +167,75 @@ public class CodeAnalysisController {
     }
     
     /**
+     * Streaming analyze with specific AI service
+     */
+    @PostMapping(value = "/analyze/{service}/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public ResponseEntity<org.springframework.web.servlet.mvc.method.annotation.SseEmitter> streamAnalyzeWithService(
+            @PathVariable("service") String service,
+            @Valid @RequestBody AnalysisRequest request) {
+        org.springframework.web.servlet.mvc.method.annotation.SseEmitter emitter = new org.springframework.web.servlet.mvc.method.annotation.SseEmitter();
+        
+        try {
+            logger.info("Received streaming analysis request: {} using service: {}", request.getAnalysisType(), service);
+            
+            codeAnalysisService.streamAnalysis(request, service)
+                .subscribe(
+                    response -> {
+                        try {
+                            emitter.send(response);
+                        } catch (Exception e) {
+                            logger.error("Error sending SSE event", e);
+                            emitter.completeWithError(e);
+                        }
+                    },
+                    error -> {
+                        logger.error("Error in streaming analysis", error);
+                        try {
+                            StreamingAnalysisResponse errorResponse = StreamingAnalysisResponse.error(
+                                error.getMessage(), request.getAnalysisType(), request.getLanguage());
+                            emitter.send(errorResponse);
+                            emitter.complete();
+                        } catch (Exception e) {
+                            emitter.completeWithError(e);
+                        }
+                    },
+                    () -> {
+                        logger.debug("Streaming analysis completed");
+                        emitter.complete();
+                    }
+                );
+                
+        } catch (Exception e) {
+            logger.error("Error setting up streaming analysis", e);
+            try {
+                StreamingAnalysisResponse errorResponse = StreamingAnalysisResponse.error(
+                    e.getMessage(), request.getAnalysisType(), request.getLanguage());
+                emitter.send(errorResponse);
+                emitter.complete();
+            } catch (Exception ex) {
+                emitter.completeWithError(ex);
+            }
+        }
+        
+        return ResponseEntity.ok(emitter);
+    }
+    
+    /**
      * Explain code endpoint
      */
     @PostMapping("/explain")
     public ResponseEntity<AnalysisResponse> explain(@Valid @RequestBody AnalysisRequest request) {
         request.setAnalysisType(com.codeassistant.model.AnalysisType.EXPLAIN);
         return analyze(request);
+    }
+    
+    /**
+     * Streaming explain code endpoint
+     */
+    @PostMapping(value = "/explain/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public ResponseEntity<org.springframework.web.servlet.mvc.method.annotation.SseEmitter> streamExplain(@Valid @RequestBody AnalysisRequest request) {
+        request.setAnalysisType(com.codeassistant.model.AnalysisType.EXPLAIN);
+        return streamAnalyze(request);
     }
     
     /**
@@ -131,12 +248,30 @@ public class CodeAnalysisController {
     }
     
     /**
+     * Streaming refactor code endpoint
+     */
+    @PostMapping(value = "/refactor/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public ResponseEntity<org.springframework.web.servlet.mvc.method.annotation.SseEmitter> streamRefactor(@Valid @RequestBody AnalysisRequest request) {
+        request.setAnalysisType(com.codeassistant.model.AnalysisType.REFACTOR);
+        return streamAnalyze(request);
+    }
+    
+    /**
      * Debug code endpoint
      */
     @PostMapping("/debug")
     public ResponseEntity<AnalysisResponse> debug(@Valid @RequestBody AnalysisRequest request) {
         request.setAnalysisType(com.codeassistant.model.AnalysisType.DEBUG);
         return analyze(request);
+    }
+    
+    /**
+     * Streaming debug code endpoint
+     */
+    @PostMapping(value = "/debug/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public ResponseEntity<org.springframework.web.servlet.mvc.method.annotation.SseEmitter> streamDebug(@Valid @RequestBody AnalysisRequest request) {
+        request.setAnalysisType(com.codeassistant.model.AnalysisType.DEBUG);
+        return streamAnalyze(request);
     }
     
     /**
