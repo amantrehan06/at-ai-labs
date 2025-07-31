@@ -18,7 +18,7 @@ The `SystemMessage` class defines the overall behavior and instructions for the 
 
 ```java
 SystemMessage systemMessage = SystemMessage.createAnalysisMessage(
-    AnalysisType.EXPLAIN, 
+    AnalysisType.WRITE_CODE, 
     "java"
 );
 ```
@@ -36,7 +36,7 @@ The `UserMessage` class contains the user's specific request or code to be analy
 ```java
 UserMessage userMessage = UserMessage.createAnalysisMessage(
     code,
-    AnalysisType.EXPLAIN,
+    AnalysisType.WRITE_CODE,
     "java"
 );
 ```
@@ -64,33 +64,22 @@ public class MessagePair {
 
 The Strategy pattern is simplified and enhanced to work with the new message structure:
 
-#### AnalysisStrategy Interface
-
-```java
-public interface AnalysisStrategy {
-    AnalysisType getAnalysisType();
-    MessagePair buildMessages(AnalysisRequest request);
-    String getDescription();
-}
-```
-
-#### Simplified Strategy Implementations
-
-Each strategy directly creates messages without complex dependencies:
-
 ```java
 @Component
-public class ExplainAnalysisStrategy implements AnalysisStrategy {
+public class WriteCodeAnalysisStrategy implements AnalysisStrategy {
+    
+    @Override
+    public AnalysisType getAnalysisType() {
+        return AnalysisType.WRITE_CODE;
+    }
     
     @Override
     public MessagePair buildMessages(AnalysisRequest request) {
-        // Create system message directly
         SystemMessage systemMessage = SystemMessage.createAnalysisMessage(
             request.getAnalysisType(), 
             request.getLanguage()
         );
         
-        // Create user message directly
         UserMessage userMessage = UserMessage.createAnalysisMessage(
             request.getCode(),
             request.getAnalysisType(),
@@ -99,32 +88,13 @@ public class ExplainAnalysisStrategy implements AnalysisStrategy {
         
         return new MessagePair(systemMessage, userMessage);
     }
+    
+    @Override
+    public String getDescription() {
+        return "Generates code based on user requirements, specifications, and programming language preferences";
+    }
 }
 ```
-
-## Benefits of This Simplified Architecture
-
-### 1. **Simplicity**
-- Direct message creation without complex factory dependencies
-- Clear, readable code with minimal method calls
-- Easy to understand and maintain
-
-### 2. **Separation of Concerns**
-- SystemMessage: Defines AI behavior and instructions
-- UserMessage: Contains user input and code
-- MessagePair: Clean container for message pairs
-- Strategy: Defines analysis type and behavior
-
-### 3. **Consistency**
-- All AI interactions use the same message structure
-- Language-specific context is automatically included
-- Response structures are standardized
-
-### 4. **Maintainability**
-- Easy to modify AI behavior by updating SystemMessage
-- Easy to add new analysis types by creating new strategies
-- No complex dependency injection chains
-- Lombok annotations reduce boilerplate code
 
 ## Usage Examples
 
@@ -133,12 +103,12 @@ public class ExplainAnalysisStrategy implements AnalysisStrategy {
 ```java
 // Create analysis request
 AnalysisRequest request = new AnalysisRequest();
-request.setCode("public class HelloWorld { ... }");
-request.setAnalysisType(AnalysisType.EXPLAIN);
+request.setCode("Create a function that calculates factorial");
+request.setAnalysisType(AnalysisType.WRITE_CODE);
 request.setLanguage("java");
 
 // Use strategy to build messages (simple one-line call)
-AnalysisStrategy strategy = strategies.get(AnalysisType.EXPLAIN);
+AnalysisStrategy strategy = strategies.get(AnalysisType.WRITE_CODE);
 MessagePair messages = strategy.buildMessages(request);
 
 // Use with AI service
@@ -151,16 +121,16 @@ List<ChatMessage> chatMessages = List.of(
 ### Comparing Different Strategies
 
 ```java
-// Same code, different strategies
-String code = "def factorial(n): return 1 if n <= 1 else n * factorial(n-1)";
+// Same requirements, different strategies
+String requirements = "Create a function that calculates factorial";
 
 AnalysisRequest request = new AnalysisRequest();
-request.setCode(code);
+request.setCode(requirements);
 request.setLanguage("python");
 
-// EXPLAIN strategy
-request.setAnalysisType(AnalysisType.EXPLAIN);
-MessagePair explainMessages = explainStrategy.buildMessages(request);
+// WRITE_CODE strategy
+request.setAnalysisType(AnalysisType.WRITE_CODE);
+MessagePair writeCodeMessages = writeCodeStrategy.buildMessages(request);
 
 // DEBUG strategy
 request.setAnalysisType(AnalysisType.DEBUG);
@@ -169,10 +139,10 @@ MessagePair debugMessages = debugStrategy.buildMessages(request);
 
 ## Analysis Types and Their System Messages
 
-### 1. EXPLAIN
-- **Purpose**: Explain what code does and how it works
-- **System Message**: Focuses on clarity and educational value
-- **Response Structure**: Overview, Functionality, Key Concepts, Code Flow
+### 1. WRITE_CODE
+- **Purpose**: Generate code based on user requirements and specifications
+- **System Message**: Focuses on code generation and best practices
+- **Response Structure**: Requirements Analysis, Generated Code, Code Explanation, Usage Instructions, Additional Notes
 
 ### 2. DEBUG
 - **Purpose**: Identify potential issues and suggest fixes

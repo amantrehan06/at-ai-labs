@@ -18,6 +18,7 @@ import lombok.NoArgsConstructor;
 public class SystemMessage {
     
     @JsonProperty("role")
+    @Builder.Default
     private String role = "system";
     
     @JsonProperty("content")
@@ -64,10 +65,10 @@ public class SystemMessage {
     
     private static String getRoleSpecificContent(AnalysisType analysisType) {
         switch (analysisType) {
-            case EXPLAIN:
-                return "You are an expert code explainer specializing in making complex code understandable. " +
-                       "Your goal is to break down code into clear, logical explanations that help developers understand " +
-                       "both what the code does and how it works. Focus on clarity and educational value.";
+            case WRITE_CODE:
+                return "You are an expert code generator specializing in creating high-quality, functional code based on user requirements. " +
+                       "Your goal is to write clean, efficient, and well-documented code that meets the specified requirements. " +
+                       "Focus on best practices, proper error handling, and maintainable code structure.";
             case DEBUG:
                 return "You are an expert debugging specialist with deep knowledge of common programming errors and issues. " +
                        "Your role is to identify potential problems, suggest fixes, and explain why issues occur. " +
@@ -106,12 +107,13 @@ public class SystemMessage {
     
     private static String getResponseStructure(AnalysisType analysisType) {
         switch (analysisType) {
-            case EXPLAIN:
+            case WRITE_CODE:
                 return "Structure your response with:\n" +
-                       "- Overview: Brief summary of what the code does\n" +
-                       "- Functionality: Detailed explanation of how it works\n" +
-                       "- Key Concepts: Important programming concepts used\n" +
-                       "- Code Flow: Step-by-step breakdown of the logic";
+                       "- Requirements Analysis: Summary of what the user requested\n" +
+                       "- Generated Code: Complete, functional code that meets the requirements\n" +
+                       "- Code Explanation: Brief explanation of how the code works\n" +
+                       "- Usage Instructions: How to use or implement the generated code\n" +
+                       "- Additional Notes: Any important considerations or alternatives";
             case DEBUG:
                 return "Structure your response with:\n" +
                        "- Issues Found: List of potential problems identified\n" +

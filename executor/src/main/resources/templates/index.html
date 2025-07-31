@@ -387,15 +387,11 @@
                 <div class="form-group">
                     <label for="aiService">🤖 AI Service</label>
                     <div class="service-selector">
-                        <div class="service-option" data-service="auto">
-                            <span class="icon">🚀</span>
-                            <span class="name">Auto</span>
-                        </div>
-                        <div class="service-option" data-service="OpenAIChatService">
+                        <div class="service-option selected" data-service="OpenAIChatService">
                             <span class="icon">🤖</span>
                             <span class="name">OpenAI</span>
                         </div>
-                        <div class="service-option selected" data-service="GroqAIChatService">
+                        <div class="service-option" data-service="GroqAIChatService">
                             <span class="icon">🦙</span>
                             <span class="name">Llama</span>
                         </div>
@@ -405,19 +401,19 @@
                 <div class="form-group">
                     <label>⚡ Response Mode</label>
                     <div class="streaming-toggle">
-                        <div class="toggle-switch" id="streamingToggle"></div>
+                        <div class="toggle-switch active" id="streamingToggle"></div>
                         <div>
                             <div class="toggle-label">Real-time Streaming</div>
-                            <div class="toggle-description">See responses as they're generated (recommended)</div>
+                            <div class="toggle-description">See responses as they're generated (real-time streaming)</div>
                         </div>
                     </div>
                 </div>
 
                 <div class="form-group">
-                    <label for="apiKey">🔑 API Key (Optional)</label>
-                    <input type="password" id="apiKey" placeholder="Enter your Groq API key (starts with gsk_)">
+                    <label for="apiKey">🔑 API Key</label>
+                    <input type="password" id="apiKey" placeholder="Enter your OpenAI API key (starts with sk-)">
                     <small id="apiKeyHelp" style="color: #666; font-size: 12px; margin-top: 5px; display: block;">
-                        Optional: Leave empty to use default key<br>Get it from: https://console.groq.com/keys
+                        Required: OpenAI API key is needed<br>Get it from: https://platform.openai.com/account/api-keys
                     </small>
                 </div>
 
@@ -442,12 +438,12 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="code">📄 Code to Analyze</label>
-                    <textarea id="code" placeholder="Paste your code here...&#10;Example:&#10;public int factorial(int n) {&#10;    return n <= 1 ? 1 : n * factorial(n-1);&#10;}"></textarea>
+                    <label for="code">📄 Requirements & Specifications</label>
+                    <textarea id="code" placeholder="Describe what you want to build...&#10;Example:&#10;Create a function that calculates the factorial of a number&#10;Or:&#10;Build a REST API endpoint for user authentication"></textarea>
                 </div>
 
                 <div class="action-buttons">
-                    <button class="action-button" onclick="analyzeCode('explain')">📖 Explain</button>
+                    <button class="action-button" onclick="analyzeCode('write-code')">✍️ Write Code</button>
                     <button class="action-button" onclick="analyzeCode('refactor')">🔧 Refactor</button>
                     <button class="action-button" onclick="analyzeCode('debug')">🐛 Debug</button>
                     <button class="action-button" onclick="analyzeCode('analyze')">🔍 Analyze</button>
@@ -455,10 +451,10 @@
             </div>
 
             <div class="output-section">
-                <h2 class="section-title">📊 Analysis Result</h2>
+                <h2 class="section-title">📊 Generated Code</h2>
                 <div class="result-container">
                     <div id="result" class="result-content">
-                        Enter code and select an analysis type to get started...
+                        Enter your requirements and select "Write Code" to get started...
                     </div>
                 </div>
             </div>
@@ -476,30 +472,77 @@
                 this.classList.add('selected');
                 
                 const selectedService = this.dataset.service;
+                console.log('🎯 Service selected:', selectedService);
+                
                 updateApiKeyHelp(selectedService);
+                updateStreamingToggle(selectedService);
             });
         });
 
         // Streaming toggle functionality
         const streamingToggle = document.getElementById('streamingToggle');
         streamingToggle.addEventListener('click', function() {
-            this.classList.toggle('active');
+            const selectedService = document.querySelector('.service-option.selected').dataset.service;
+            
+            console.log('⚡ Streaming toggle clicked:', {
+                selectedService: selectedService,
+                currentState: this.classList.contains('active')
+            });
+            
+            // Only allow streaming for OpenAI
+            if (selectedService === 'OpenAIChatService') {
+                this.classList.toggle('active');
+                console.log('✅ Streaming toggled:', this.classList.contains('active'));
+            } else {
+                // For other services, show a message that streaming is not supported
+                console.log('⚠️ Streaming not supported for service:', selectedService);
+                showResult('⚠️ Streaming is only supported for OpenAI. Llama/Groq does not support streaming.', 'error');
+                setTimeout(() => {
+                    showResult('Enter your requirements and select "Write Code" to get started...', '');
+                }, 2000);
+            }
         });
 
         function updateApiKeyHelp(selectedService) {
             const apiKeyInput = document.getElementById('apiKey');
             const apiKeyHelp = document.getElementById('apiKeyHelp');
             
+            console.log('🔑 Updating API key help for service:', selectedService);
+            
             if (selectedService === 'OpenAIChatService') {
                 apiKeyInput.placeholder = 'Enter your OpenAI API key (starts with sk-)';
                 apiKeyHelp.innerHTML = 'Required: OpenAI API key is needed<br>Get it from: https://platform.openai.com/account/api-keys';
             } else if (selectedService === 'GroqAIChatService') {
                 apiKeyInput.placeholder = 'Enter your Groq API key (starts with gsk_)';
-                apiKeyHelp.innerHTML = 'Optional: Leave empty to use default key<br>Get it from: https://console.groq.com/keys';
-            } else {
-                apiKeyInput.placeholder = 'Enter your API key to override default';
-                apiKeyHelp.innerHTML = 'Optional: Leave empty to use default keys';
+                apiKeyHelp.innerHTML = 'Required: Groq API key is needed<br>Get it from: https://console.groq.com/keys';
             }
+        }
+
+        function updateStreamingToggle(selectedService) {
+            const streamingToggle = document.getElementById('streamingToggle');
+            const toggleDescription = document.querySelector('.toggle-description');
+            
+            console.log('⚡ Updating streaming toggle for service:', selectedService);
+            
+            if (selectedService === 'OpenAIChatService') {
+                streamingToggle.classList.add('active');
+                toggleDescription.textContent = 'See responses as they\'re generated (real-time streaming)';
+                console.log('✅ Streaming enabled for OpenAI');
+            } else {
+                streamingToggle.classList.remove('active');
+                toggleDescription.textContent = 'Streaming not supported for Llama/Groq';
+                console.log('❌ Streaming disabled for service:', selectedService);
+            }
+        }
+        
+        function mapTypeToAnalysisType(type) {
+            const typeMap = {
+                'write-code': 'WRITE_CODE',
+                'refactor': 'REFACTOR',
+                'debug': 'DEBUG',
+                'analyze': 'ANALYZE'
+            };
+            return typeMap[type] || type.toUpperCase();
         }
         
         async function analyzeCode(type) {
@@ -510,30 +553,84 @@
             const code = document.getElementById('code').value;
             const resultDiv = document.getElementById('result');
             
+            console.log('🚀 Starting analysis request:', {
+                type: type,
+                selectedService: selectedService,
+                isStreaming: isStreaming,
+                hasApiKey: !!apiKey,
+                language: language,
+                codeLength: code.length
+            });
+            
             if (!code.trim()) {
-                showResult('❌ Please enter some code to analyze', 'error');
+                showResult('❌ Please enter your requirements or specifications', 'error');
                 return;
             }
             
-            if (isStreaming) {
-                await analyzeCodeStreaming(type, selectedService, apiKey, language, code);
+            if (!apiKey.trim()) {
+                showResult('❌ Please enter your API key', 'error');
+                return;
+            }
+            
+            // Check if streaming is allowed for the selected service
+            const streamingAllowed = selectedService === 'OpenAIChatService';
+            const shouldUseStreaming = isStreaming && streamingAllowed;
+            
+            console.log('📊 Streaming configuration:', {
+                streamingAllowed: streamingAllowed,
+                shouldUseStreaming: shouldUseStreaming,
+                isStreaming: isStreaming,
+                selectedService: selectedService
+            });
+            
+            if (isStreaming && !streamingAllowed) {
+                console.log('⚠️ Streaming requested but not supported for service:', selectedService);
+                showResult('⚠️ Streaming is only supported for OpenAI. Llama/Groq does not support streaming.', 'loading');
+                setTimeout(() => {
+                    analyzeCodeRegular(type, selectedService, apiKey, language, code);
+                }, 1000);
+                return;
+            }
+            
+            if (shouldUseStreaming) {
+                console.log('🔄 Using streaming mode for service:', selectedService);
+                try {
+                    await analyzeCodeStreaming(type, selectedService, apiKey, language, code);
+                } catch (error) {
+                    console.log('❌ Streaming failed, falling back to regular mode:', error);
+                    showResult('⚠️ Streaming failed, trying regular mode...', 'loading');
+                    await analyzeCodeRegular(type, selectedService, apiKey, language, code);
+                }
             } else {
+                console.log('📝 Using regular mode for service:', selectedService);
                 await analyzeCodeRegular(type, selectedService, apiKey, language, code);
             }
         }
         
         async function analyzeCodeRegular(type, selectedService, apiKey, language, code) {
             const resultDiv = document.getElementById('result');
-            showResult('⏳ Analyzing code...', 'loading');
+            showResult('⏳ Processing request...', 'loading');
+            
+            console.log('📤 Sending regular request:', {
+                type: type,
+                service: selectedService,
+                language: language,
+                codeLength: code.length,
+                hasApiKey: !!apiKey
+            });
             
             try {
-                let url = `${API_BASE}/${type}`;
+                const url = `${API_BASE}/assist/${selectedService}`;
                 
-                if (selectedService !== 'auto') {
-                    url = `${API_BASE}/analyze/${selectedService}`;
-                }
+                const analysisType = mapTypeToAnalysisType(type);
                 
-                const analysisType = type.toUpperCase();
+                console.log('🌐 Request URL:', url);
+                console.log('📋 Request payload:', {
+                    analysisType: analysisType,
+                    language: language,
+                    codeLength: code.length,
+                    hasApiKey: !!apiKey
+                });
                 
                 const response = await fetch(url, {
                     method: 'POST',
@@ -548,37 +645,62 @@
                     })
                 });
                 
+                console.log('📥 Response status:', response.status);
+                console.log('📥 Response headers:', Object.fromEntries(response.headers.entries()));
+                
                 if (!response.ok) {
                     const errorText = await response.text();
+                    console.error('❌ HTTP error:', response.status, errorText);
                     throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
                 }
                 
                 const data = await response.json();
+                console.log('✅ Response received:', {
+                    success: data.success,
+                    analysisType: data.analysisType,
+                    language: data.language,
+                    analysisLength: data.analysis?.length || 0
+                });
                 
-                let serviceInfo = '';
-                if (selectedService !== 'auto') {
-                    serviceInfo = `\n\n🎯 Used Service: ${selectedService}`;
-                }
-                
-                showResult(`✅ ${type.toUpperCase()} Analysis:${serviceInfo}\n\n${data.analysis}`, 'success');
+                const serviceInfo = `\n\n🎯 Used Service: ${selectedService}`;
+                showResult(`✅ ${type.toUpperCase()} Result:${serviceInfo}\n\n${data.analysis}`, 'success');
                 
             } catch (error) {
+                console.error('❌ Regular analysis error:', error);
                 showResult(`❌ Error: ${error.message}`, 'error');
             }
         }
         
         async function analyzeCodeStreaming(type, selectedService, apiKey, language, code) {
             const resultDiv = document.getElementById('result');
-            showResult('⏳ Starting streaming analysis...', 'loading');
+            showResult('⏳ Starting streaming processing...', 'loading');
+            
+            console.log('🔄 Starting streaming analysis:', {
+                type: type,
+                service: selectedService,
+                language: language,
+                codeLength: code.length,
+                hasApiKey: !!apiKey
+            });
+            
+            // Set a timeout for the streaming request
+            const timeout = setTimeout(() => {
+                console.log('⏰ Streaming request timed out after 30 seconds');
+                showResult('❌ Request timed out. Please try again.', 'error');
+            }, 30000); // 30 seconds timeout
             
             try {
-                let url = `${API_BASE}/${type}/stream`;
+                const url = `${API_BASE}/assist/${selectedService}/stream`;
                 
-                if (selectedService !== 'auto') {
-                    url = `${API_BASE}/analyze/${selectedService}/stream`;
-                }
+                const analysisType = mapTypeToAnalysisType(type);
                 
-                const analysisType = type.toUpperCase();
+                console.log('🌐 Streaming request URL:', url);
+                console.log('📋 Streaming request payload:', {
+                    analysisType: analysisType,
+                    language: language,
+                    codeLength: code.length,
+                    hasApiKey: !!apiKey
+                });
                 
                 const response = await fetch(url, {
                     method: 'POST',
@@ -593,59 +715,167 @@
                     })
                 });
                 
+                console.log('📥 Streaming response status:', response.status);
+                console.log('📥 Streaming response headers:', Object.fromEntries(response.headers.entries()));
+                
                 if (!response.ok) {
+                    clearTimeout(timeout);
                     const errorText = await response.text();
+                    console.error('❌ Streaming HTTP error:', response.status, errorText);
                     throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
                 }
+                
+                console.log('✅ Streaming connection established successfully');
                 
                 // Handle Server-Sent Events using ReadableStream
                 const reader = response.body.getReader();
                 const decoder = new TextDecoder();
                 let streamingContent = '';
+                let hasReceivedContent = false;
+                let buffer = '';
+                let chunkCount = 0;
+                let totalBytesReceived = 0;
+                
+                console.log('📡 Starting SSE stream processing...');
                 
                 try {
                     while (true) {
                         const { done, value } = await reader.read();
                         
                         if (done) {
+                            console.log('📡 Stream completed by server');
                             break;
                         }
                         
                         const chunk = decoder.decode(value, { stream: true });
-                        const lines = chunk.split('\n');
+                        buffer += chunk;
+                        chunkCount++;
+                        totalBytesReceived += value.length;
+                        
+                        console.log(`📦 Received chunk #${chunkCount}:`, {
+                            chunkLength: chunk.length,
+                            bufferLength: buffer.length,
+                            totalBytesReceived: totalBytesReceived,
+                            hasNewlines: chunk.includes('\n')
+                        });
+                        
+                        // Process complete lines from buffer
+                        const lines = buffer.split('\n');
+                        buffer = lines.pop() || ''; // Keep incomplete line in buffer
+                        
+                        console.log(`📝 Processing ${lines.length} complete lines from buffer`);
                         
                         for (const line of lines) {
-                            if (line.startsWith('data:')) {
+                            const trimmedLine = line.trim();
+                            
+                            // Skip empty lines
+                            if (!trimmedLine) {
+                                continue;
+                            }
+                            
+                            console.log('🔍 Processing SSE line:', trimmedLine);
+                            
+                            // Handle SSE data lines
+                            if (trimmedLine.startsWith('data:')) {
+                                const dataContent = trimmedLine.substring(5); // Use substring instead of slice+trim
+                                
+                                console.log('📄 Data content before parsing:', dataContent);
+                                
+                                // Skip empty data
+                                if (!dataContent) {
+                                    continue;
+                                }
+                                
                                 try {
-                                    const data = JSON.parse(line.slice(5));
+                                    const data = JSON.parse(dataContent);
+                                    console.log('✅ Parsed SSE data:', {
+                                        eventType: data.eventType,
+                                        contentLength: data.content?.length || 0,
+                                        analysisType: data.analysisType,
+                                        language: data.language,
+                                        success: data.success,
+                                        complete: data.complete
+                                    });
                                     
                                     if (data.eventType === 'content') {
+                                        console.log('📝 Received content chunk:', data.content);
                                         streamingContent += data.content;
-                                        showResult(`🔄 ${type.toUpperCase()} Analysis (Streaming):\n\n${streamingContent}`, 'streaming');
+                                        hasReceivedContent = true;
+                                        showResult(`🔄 ${type.toUpperCase()} Processing (Streaming):\n\n${streamingContent}`, 'streaming');
                                     } else if (data.eventType === 'complete') {
-                                        showResult(`✅ ${type.toUpperCase()} Analysis (Complete):\n\n${streamingContent}`, 'success');
+                                        console.log('✅ Received complete event');
+                                        clearTimeout(timeout);
+                                        showResult(`✅ ${type.toUpperCase()} Result (Complete):\n\n${streamingContent}`, 'success');
                                         return;
                                     } else if (data.eventType === 'error') {
+                                        console.log('❌ Received error event:', data.error);
+                                        clearTimeout(timeout);
                                         showResult(`❌ Error: ${data.error}`, 'error');
                                         return;
                                     }
                                 } catch (parseError) {
-                                    console.log('Could not parse SSE data:', line);
+                                    console.log('❌ Could not parse SSE data:', trimmedLine, parseError);
+                                    console.log('📄 Data content was:', dataContent);
+                                }
+                            } else {
+                                console.log('⚠️ Non-data line:', trimmedLine);
+                            }
+                        }
+                    }
+                    
+                    // Process any remaining buffer content
+                    if (buffer.trim()) {
+                        console.log('📄 Processing remaining buffer content:', buffer.trim());
+                        const trimmedLine = buffer.trim();
+                        if (trimmedLine.startsWith('data:')) {
+                            const dataContent = trimmedLine.substring(5);
+                            if (dataContent) {
+                                try {
+                                    const data = JSON.parse(dataContent);
+                                    if (data.eventType === 'content') {
+                                        streamingContent += data.content;
+                                        hasReceivedContent = true;
+                                        console.log('📝 Final content chunk:', data.content);
+                                    }
+                                } catch (parseError) {
+                                    console.log('❌ Could not parse final SSE data:', trimmedLine, parseError);
                                 }
                             }
                         }
                     }
                     
                     // If we reach here, show the final result
-                    showResult(`✅ ${type.toUpperCase()} Analysis (Complete):\n\n${streamingContent}`, 'success');
+                    clearTimeout(timeout);
+                    console.log('📊 Streaming summary:', {
+                        chunkCount: chunkCount,
+                        totalBytesReceived: totalBytesReceived,
+                        hasReceivedContent: hasReceivedContent,
+                        finalContentLength: streamingContent.length
+                    });
+                    
+                    if (hasReceivedContent) {
+                        showResult(`✅ ${type.toUpperCase()} Result (Complete):\n\n${streamingContent}`, 'success');
+                    } else {
+                        console.log('❌ No content received from streaming response');
+                        showResult(`❌ No content received from streaming response`, 'error');
+                    }
                     
                 } catch (streamError) {
-                    showResult(`❌ Streaming error: ${streamError.message}`, 'error');
+                    clearTimeout(timeout);
+                    console.error('❌ Streaming error:', streamError);
+                    if (hasReceivedContent) {
+                        showResult(`✅ ${type.toUpperCase()} Result (Partial):\n\n${streamingContent}`, 'success');
+                    } else {
+                        showResult(`❌ Streaming error: ${streamError.message}`, 'error');
+                    }
                 } finally {
                     reader.releaseLock();
+                    console.log('🔒 Reader lock released');
                 }
                 
             } catch (error) {
+                clearTimeout(timeout);
+                console.error('❌ Request error:', error);
                 showResult(`❌ Error: ${error.message}`, 'error');
             }
         }
@@ -657,39 +887,48 @@
         }
         
         async function loadServiceStats() {
+            console.log('📊 Loading service stats...');
             try {
                 const response = await fetch(`${API_BASE}/services/stats`);
                 if (response.ok) {
                     const stats = await response.json();
+                    console.log('✅ Service stats loaded:', stats);
                     document.getElementById('availableServices').textContent = stats.availableServices;
                     document.getElementById('apiStatus').textContent = stats.hasServices ? '🟢 Online' : '🔴 Offline';
                 }
             } catch (error) {
+                console.error('❌ Failed to load service stats:', error);
                 document.getElementById('apiStatus').textContent = '🔴 Offline';
                 document.getElementById('availableServices').textContent = '0';
             }
         }
         
         async function loadAvailableServices() {
+            console.log('🔍 Loading available services...');
             try {
                 const response = await fetch(`${API_BASE}/services`);
                 if (response.ok) {
                     const services = await response.json();
                     availableServices = Object.keys(services);
+                    console.log('✅ Available services loaded:', availableServices);
                 }
             } catch (error) {
-                console.log('Could not load available services from backend');
+                console.error('❌ Could not load available services from backend:', error);
             }
         }
         
         // Initialize on page load
         window.onload = async function() {
+            console.log('🚀 Page loaded, initializing...');
             await loadServiceStats();
             await loadAvailableServices();
             
-            // Set default streaming to true
-            document.getElementById('streamingToggle').classList.add('active');
+            // Set streaming state based on default selected service (OpenAI)
+            const defaultService = document.querySelector('.service-option.selected').dataset.service;
+            console.log('🎯 Default service:', defaultService);
+            updateStreamingToggle(defaultService);
+            console.log('✅ Initialization complete');
         };
     </script>
 </body>
-</html> 
+</html>
