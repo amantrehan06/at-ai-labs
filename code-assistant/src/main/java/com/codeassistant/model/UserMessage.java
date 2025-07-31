@@ -18,6 +18,7 @@ import lombok.NoArgsConstructor;
 public class UserMessage {
     
     @JsonProperty("role")
+    @Builder.Default
     private String role = "user";
     
     @JsonProperty("content")
@@ -38,29 +39,34 @@ public class UserMessage {
     public static UserMessage createAnalysisMessage(String code, AnalysisType analysisType, String language) {
         StringBuilder content = new StringBuilder();
         
-        content.append("Please analyze the following code");
-        
         switch (analysisType) {
-            case EXPLAIN:
-                content.append(" and provide a clear explanation of what it does and how it works");
+            case WRITE_CODE:
+                content.append("Please generate code based on the following requirements and specifications");
                 break;
             case DEBUG:
-                content.append(" for potential bugs, issues, or areas of concern");
+                content.append("Please analyze the following code for potential bugs, issues, or areas of concern");
                 break;
             case REFACTOR:
-                content.append(" for refactoring opportunities to improve code quality and maintainability");
+                content.append("Please analyze the following code for refactoring opportunities to improve code quality and maintainability");
                 break;
             case ANALYZE:
-                content.append(" comprehensively including functionality, performance, security, and maintainability");
+                content.append("Please analyze the following code comprehensively including functionality, performance, security, and maintainability");
                 break;
             default:
-                content.append(" professionally");
+                content.append("Please analyze the following code professionally");
         }
         
         content.append(":\n\n");
-        content.append("```").append(language).append("\n");
-        content.append(code);
-        content.append("\n```");
+        
+        if (analysisType == AnalysisType.WRITE_CODE) {
+            content.append("Requirements:\n");
+            content.append(code);
+            content.append("\n\nPlease generate the code in ").append(language).append(".");
+        } else {
+            content.append("```").append(language).append("\n");
+            content.append(code);
+            content.append("\n```");
+        }
         
         return UserMessage.builder()
             .content(content.toString())

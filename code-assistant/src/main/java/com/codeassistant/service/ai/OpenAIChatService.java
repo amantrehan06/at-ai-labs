@@ -2,7 +2,6 @@ package com.codeassistant.service.ai;
 
 import com.codeassistant.model.AnalysisRequest;
 import com.codeassistant.model.AnalysisResponse;
-import com.codeassistant.model.MessagePair;
 import com.codeassistant.model.StreamingAnalysisResponse;
 import com.codeassistant.service.strategy.AnalysisStrategy;
 import com.common.AIServiceManager;
@@ -11,6 +10,7 @@ import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.ChatMessage;
 import dev.langchain4j.model.chat.ChatLanguageModel;
 import dev.langchain4j.model.chat.StreamingChatLanguageModel;
+import dev.langchain4j.model.StreamingResponseHandler;
 import dev.langchain4j.model.output.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,15 +59,9 @@ public class OpenAIChatService implements AIChatService {
             ChatLanguageModel chatModel = aiServiceManager.getModel(AIServiceConstants.OPENAI_SERVICE, request.getApiKey());
             
             // Use the strategy to build messages (maintains Strategy pattern)
-            MessagePair messages = strategy.buildMessages(request);
+            List<ChatMessage> messages = strategy.buildMessages(request).toLangChain4jMessages();
             
-            // Convert to LangChain4j message types
-            List<ChatMessage> chatMessages = List.of(
-                new dev.langchain4j.data.message.SystemMessage(messages.getSystemContent()),
-                new dev.langchain4j.data.message.UserMessage(messages.getUserContent())
-            );
-            
-            Response<AiMessage> response = chatModel.generate(chatMessages);
+            Response<AiMessage> response = chatModel.generate(messages);
             
             String analysis = response.content().text();
             
@@ -97,21 +91,41 @@ public class OpenAIChatService implements AIChatService {
             StreamingChatLanguageModel streamingModel = aiServiceManager.getStreamingModel(AIServiceConstants.OPENAI_SERVICE, request.getApiKey());
             
             // Use the strategy to build messages (maintains Strategy pattern)
-            MessagePair messages = strategy.buildMessages(request);
-            
-            // Convert to LangChain4j message types
-            List<ChatMessage> chatMessages = List.of(
-                new dev.langchain4j.data.message.SystemMessage(messages.getSystemContent()),
-                new dev.langchain4j.data.message.UserMessage(messages.getUserContent())
-            );
-            
-            // For now, return a simple streaming response
-            // TODO: Implement proper streaming when LangChain4j API is stable
-            return Flux.just(
-                StreamingAnalysisResponse.contentChunk("Streaming not yet implemented", request.getAnalysisType(), request.getLanguage()),
-                StreamingAnalysisResponse.complete(request.getAnalysisType(), request.getLanguage())
-            );
-                
+            List<ChatMessage> messages = strategy.buildMessages(request).toLangChain4jMessages();
+
+            // Implement proper streaming using Flux.create and StreamingResponseHandler
+            return Flux.create(emitter -> {
+                try {
+                    streamingModel.generate(messages, new StreamingResponseHandler<AiMessage>() {
+                        @Override
+                        public void onNext(String token) {
+                            // Emit each token as a content chunk
+                            logger.info("Emitting content: "+token);
+                            emitter.next(StreamingAnalysisResponse.contentChunk(token, request.getAnalysisType(), request.getLanguage()));
+                        }
+
+                        @Override
+                        public void onComplete(Response<AiMessage> response) {
+                            // Emit completion event
+                            emitter.next(StreamingAnalysisResponse.complete(request.getAnalysisType(), request.getLanguage()));
+                            emitter.complete();
+                        }
+                        
+                        @Override
+                        public void onError(Throwable error) {
+                            // Emit error event
+                            emitter.next(StreamingAnalysisResponse.error("Streaming error: " + error.getMessage(), 
+                                request.getAnalysisType(), request.getLanguage()));
+                            emitter.complete();
+                        }
+                    });
+                } catch (Exception e) {
+                    logger.error("Error in streaming generation", e);
+                    emitter.next(StreamingAnalysisResponse.error("Failed to start streaming: " + e.getMessage(), 
+                        request.getAnalysisType(), request.getLanguage()));
+                    emitter.complete();
+                }
+            });
         } catch (Exception e) {
             logger.error("Error setting up streaming analysis with OpenAI", e);
             return Flux.just(StreamingAnalysisResponse.error("Failed to setup streaming analysis: " + e.getMessage(), 

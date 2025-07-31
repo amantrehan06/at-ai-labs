@@ -8,14 +8,14 @@ import com.codeassistant.model.UserMessage;
 import org.springframework.stereotype.Component;
 
 /**
- * Strategy for explaining code - describes what the code does and how it works.
+ * Strategy for writing code - generates code based on user requirements and specifications.
  */
 @Component
-public class ExplainAnalysisStrategy implements AnalysisStrategy {
+public class WriteCodeAnalysisStrategy implements AnalysisStrategy {
     
     @Override
     public AnalysisType getAnalysisType() {
-        return AnalysisType.EXPLAIN;
+        return AnalysisType.WRITE_CODE;
     }
     
     @Override
@@ -38,6 +38,6 @@ public class ExplainAnalysisStrategy implements AnalysisStrategy {
     
     @Override
     public String getDescription() {
-        return "Explains what the code does, how it works, and the key concepts involved";
+        return "Generates code based on user requirements, specifications, and programming language preferences";
     }
 } 

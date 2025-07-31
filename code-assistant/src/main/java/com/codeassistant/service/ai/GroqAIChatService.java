@@ -59,15 +59,9 @@ public class GroqAIChatService implements AIChatService {
             ChatLanguageModel chatModel = aiServiceManager.getModel(AIServiceConstants.GROQ_SERVICE, request.getApiKey());
             
             // Use the strategy to build messages (maintains Strategy pattern)
-            MessagePair messages = strategy.buildMessages(request);
+            List<ChatMessage> messages = strategy.buildMessages(request).toLangChain4jMessages();
             
-            // Convert to LangChain4j message types
-            List<ChatMessage> chatMessages = List.of(
-                new dev.langchain4j.data.message.SystemMessage(messages.getSystemContent()),
-                new dev.langchain4j.data.message.UserMessage(messages.getUserContent())
-            );
-            
-            Response<AiMessage> response = chatModel.generate(chatMessages);
+            Response<AiMessage> response = chatModel.generate(messages);
             
             String analysis = response.content().text();
             
@@ -101,8 +95,8 @@ public class GroqAIChatService implements AIChatService {
             
             // Convert to LangChain4j message types
             List<ChatMessage> chatMessages = List.of(
-                new dev.langchain4j.data.message.SystemMessage(messages.getSystemContent()),
-                new dev.langchain4j.data.message.UserMessage(messages.getUserContent())
+                new dev.langchain4j.data.message.SystemMessage(messages.getSystemMessage().getContent()),
+                new dev.langchain4j.data.message.UserMessage(messages.getUserMessage().getContent())
             );
             
             // For now, return a simple streaming response

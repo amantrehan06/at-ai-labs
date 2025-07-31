@@ -1,153 +1,184 @@
-# Streaming Features
+# Streaming Features Documentation
 
 ## Overview
 
-The Code Assistant service now supports **real-time streaming responses** using Server-Sent Events (SSE) to provide a more polished user experience. This allows users to see AI responses as they are generated, rather than waiting for the complete response.
+This document describes the streaming capabilities of the Code Assistant API, which provides real-time streaming responses for code assistance operations.
 
-## Features
-
-### ✅ Implemented Features
-
-1. **Streaming Endpoints**: All analysis endpoints now have streaming variants
-2. **Server-Sent Events (SSE)**: Real-time streaming using Spring's SSE support
-3. **Error Handling**: Proper error handling in streaming responses
-4. **Reactive Programming**: Built with Reactor/Flux for non-blocking operations
-5. **Strategy Pattern Integration**: Streaming works with all existing analysis strategies
-
-### 🔄 Streaming Endpoints
+## Available Streaming Endpoints
 
 | Regular Endpoint | Streaming Endpoint | Description |
 |------------------|-------------------|-------------|
-| `POST /api/v1/code/analyze` | `POST /api/v1/code/analyze/stream` | Generic analysis with streaming |
-| `POST /api/v1/code/explain` | `POST /api/v1/code/explain/stream` | Code explanation with streaming |
-| `POST /api/v1/code/refactor` | `POST /api/v1/code/refactor/stream` | Code refactoring with streaming |
-| `POST /api/v1/code/debug` | `POST /api/v1/code/debug/stream` | Code debugging with streaming |
-| `POST /api/v1/code/analyze/{service}` | `POST /api/v1/code/analyze/{service}/stream` | Service-specific analysis with streaming |
+| `POST /api/v1/code/assist` | `POST /api/v1/code/assist/stream` | Generic code assistance with streaming |
+| `POST /api/v1/code/assist/{service}` | `POST /api/v1/code/assist/{service}/stream` | Service-specific assistance with streaming |
 
-### 📊 Response Format
+## Request Format
 
-Streaming responses use the `StreamingAnalysisResponse` model:
+All streaming endpoints accept the same JSON request format:
 
 ```json
 {
-  "eventType": "content|complete|error",
-  "content": "streaming text chunk",
-  "analysisType": "EXPLAIN|REFACTOR|DEBUG|COMPREHENSIVE",
-  "language": "java|python|javascript|...",
-  "isComplete": false,
-  "error": "error message if any",
-  "success": true
+    "code": "Your code or requirements here",
+    "language": "java|python|javascript|typescript|cpp|c|csharp|php|ruby|go|rust|swift|kotlin|scala",
+    "analysisType": "WRITE_CODE|REFACTOR|DEBUG|ANALYZE",
+    "apiKey": "your-api-key-here"
 }
 ```
 
-### 🔧 Technical Implementation
+## Response Format
 
-#### Architecture
-- **Reactor/Flux**: Non-blocking reactive streams
-- **SSE Emitter**: Spring's Server-Sent Events support
-- **StreamingResponseHandler**: LangChain4j integration (placeholder)
-- **Strategy Pattern**: Maintains existing design patterns
+Streaming responses use Server-Sent Events (SSE) format with the following event types:
 
-#### Components
-1. **StreamingAnalysisResponse**: Model for streaming events
-2. **AIChatService.streamAnalysis()**: Interface for streaming
-3. **CodeAnalysisController**: SSE endpoints
-4. **AIServiceManager**: Streaming model management
+### Content Event
+```json
+{
+    "eventType": "content",
+    "content": "Generated or analyzed content here..."
+}
+```
 
-### 🚀 Usage Examples
+### Complete Event
+```json
+{
+    "eventType": "complete",
+    "analysis": "Final complete analysis result"
+}
+```
 
-#### JavaScript Client Example
+### Error Event
+```json
+{
+    "eventType": "error",
+    "error": "Error message describing what went wrong"
+}
+```
+
+## JavaScript Usage Example
+
 ```javascript
-const eventSource = new EventSource('/api/v1/code/explain/stream');
+// Create EventSource for streaming
+const eventSource = new EventSource('/api/v1/code/assist/stream');
 
+// Handle incoming content
 eventSource.onmessage = function(event) {
-    const response = JSON.parse(event.data);
+    const data = JSON.parse(event.data);
     
-    if (response.eventType === 'content') {
-        // Append content to UI
-        document.getElementById('output').innerHTML += response.content;
-    } else if (response.eventType === 'complete') {
+    if (data.eventType === 'content') {
+        // Append new content to UI
+        appendToResult(data.content);
+    } else if (data.eventType === 'complete') {
         // Handle completion
         eventSource.close();
-    } else if (response.eventType === 'error') {
+        showCompleteResult(data.analysis);
+    } else if (data.eventType === 'error') {
         // Handle error
-        console.error(response.error);
         eventSource.close();
+        showError(data.error);
     }
+};
+
+// Handle connection errors
+eventSource.onerror = function(event) {
+    eventSource.close();
+    showError('Connection error occurred');
 };
 ```
 
-#### cURL Example
+## cURL Usage Example
+
 ```bash
-curl -X POST http://localhost:8080/api/v1/code/explain/stream \
+# Test streaming assist for code generation
+curl -X POST http://localhost:8080/api/v1/code/assist/stream \
   -H "Content-Type: application/json" \
   -d '{
-    "code": "public class Hello { public static void main(String[] args) { System.out.println(\"Hello World\"); } }",
+    "code": "Create a function that calculates factorial",
     "language": "java",
-    "apiKey": "your-api-key"
-  }'
+    "analysisType": "WRITE_CODE"
+  }' \
+  --no-buffer
+
+# Test streaming assist for code refactoring
+curl -X POST http://localhost:8080/api/v1/code/assist/stream \
+  -H "Content-Type: application/json" \
+  -d '{
+    "code": "public int factorial(int n) { return n <= 1 ? 1 : n * factorial(n-1); }",
+    "language": "java",
+    "analysisType": "REFACTOR"
+  }' \
+  --no-buffer
 ```
 
-### 🔮 Future Enhancements
+## Benefits of Streaming
 
-#### TODO: Full LangChain4j Integration
-- **Current**: Placeholder implementation
-- **Future**: Full streaming with LangChain4j's `StreamingResponseHandler`
-- **Benefits**: Real token-by-token streaming from AI models
+### 1. **Real-time Feedback**
+- Users see results as they're generated
+- No need to wait for complete response
+- Better user experience for long operations
 
-#### Planned Features
-1. **WebSocket Support**: Alternative to SSE for bi-directional communication
-2. **Streaming Metrics**: Monitor streaming performance
-3. **Rate Limiting**: Prevent abuse of streaming endpoints
-4. **Caching**: Cache streaming responses for repeated queries
+### 2. **Progress Indication**
+- Content appears incrementally
+- Users can see work in progress
+- Reduces perceived wait time
 
-### 🛠️ Configuration
+### 3. **Resource Efficiency**
+- Server can start processing immediately
+- Memory usage is more efficient
+- Better handling of large responses
 
-#### Dependencies
-```xml
-<!-- Reactor for streaming support -->
-<dependency>
-    <groupId>io.projectreactor</groupId>
-    <artifactId>reactor-core</artifactId>
-</dependency>
-```
+### 4. **Error Handling**
+- Immediate error feedback
+- Graceful degradation
+- Better debugging capabilities
 
-#### Properties
-```properties
-# Streaming timeout (default: 60 seconds)
-spring.mvc.async.request-timeout=60000
-```
+## Implementation Details
 
-### 🧪 Testing
+### Backend Implementation
+- Uses Spring's `SseEmitter` for streaming
+- Handles multiple concurrent streams
+- Proper error handling and cleanup
+- Memory-efficient processing
 
-#### Test Streaming Endpoints
+### Frontend Implementation
+- Uses `EventSource` API for SSE
+- Automatic reconnection handling
+- Graceful error recovery
+- Progressive content display
+
+## Testing Streaming Endpoints
+
 ```bash
-# Test streaming explain
-curl -X POST http://localhost:8080/api/v1/code/explain/stream \
+# Test streaming assist for code generation
+curl -X POST http://localhost:8080/api/v1/code/assist/stream \
   -H "Content-Type: application/json" \
-  -d '{"code":"console.log(\"Hello\")","language":"javascript"}'
+  -d '{
+    "code": "Create a REST API endpoint for user authentication",
+    "language": "python",
+    "analysisType": "WRITE_CODE"
+  }' \
+  --no-buffer
 
-# Test streaming with specific service
-curl -X POST http://localhost:8080/api/v1/code/analyze/openai/stream \
+# Test with specific service
+curl -X POST http://localhost:8080/api/v1/code/assist/GroqAIChatService/stream \
   -H "Content-Type: application/json" \
-  -d '{"code":"print(\"Hello\")","language":"python","apiKey":"your-key"}'
+  -d '{
+    "code": "Debug this JavaScript function",
+    "language": "javascript",
+    "analysisType": "DEBUG"
+  }' \
+  --no-buffer
 ```
 
-### 📈 Benefits
+## Error Handling
 
-1. **Improved UX**: Users see responses in real-time
-2. **Better Feedback**: Immediate indication that processing has started
-3. **Reduced Perceived Latency**: Content appears as it's generated
-4. **Error Handling**: Immediate error feedback
-5. **Scalability**: Non-blocking reactive streams
+Streaming endpoints handle various error scenarios:
 
-### 🔒 Security Considerations
+1. **Invalid Request**: Returns error event immediately
+2. **AI Service Errors**: Propagates service-specific errors
+3. **Network Issues**: Graceful timeout and cleanup
+4. **Memory Issues**: Proper resource management
 
-1. **API Key Validation**: Streaming endpoints validate API keys
-2. **Rate Limiting**: Consider implementing rate limits for streaming
-3. **Timeout Handling**: Proper timeout handling for long-running streams
-4. **Error Boundaries**: Graceful error handling and cleanup
+## Performance Considerations
 
-## Conclusion
-
-The streaming features provide a foundation for real-time AI interactions while maintaining the existing architecture and design patterns. The placeholder implementation allows for immediate testing and UI development, with full LangChain4j integration planned for future releases. 
+- Streaming reduces memory usage on server
+- Progressive rendering improves perceived performance
+- Connection pooling for multiple concurrent users
+- Automatic cleanup of completed streams 
