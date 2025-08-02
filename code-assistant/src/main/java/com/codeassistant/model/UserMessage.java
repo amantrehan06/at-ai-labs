@@ -52,6 +52,9 @@ public class UserMessage {
             case ANALYZE:
                 content.append("Please analyze the following code comprehensively including functionality, performance, security, and maintainability");
                 break;
+            case FOLLOWUP:
+                content.append("Follow-up question");
+                break;
             default:
                 content.append("Please analyze the following code professionally");
         }
@@ -62,6 +65,9 @@ public class UserMessage {
             content.append("Requirements:\n");
             content.append(code);
             content.append("\n\nPlease generate the code in ").append(language).append(".");
+        } else if (analysisType == AnalysisType.FOLLOWUP) {
+            content.append(code);
+            content.append("\n\nPlease provide a helpful response to this follow-up question.");
         } else {
             content.append("```").append(language).append("\n");
             content.append(code);

@@ -36,6 +36,11 @@ public class StreamingAnalysisResponse {
     private String language;
     
     /**
+     * Session ID for conversation context
+     */
+    private String sessionId;
+    
+    /**
      * Whether the streaming is complete
      */
     private boolean isComplete;

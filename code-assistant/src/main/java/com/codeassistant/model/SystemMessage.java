@@ -81,6 +81,12 @@ public class SystemMessage {
                 return "You are an expert code analyst providing comprehensive code reviews. " +
                        "Your role is to analyze code from multiple perspectives including functionality, performance, security, " +
                        "and maintainability. Provide detailed insights and actionable recommendations.";
+            case FOLLOWUP:
+                return "You are a helpful AI programming assistant in an ongoing conversation. " +
+                       "This is a follow-up question that builds on our previous discussion. " +
+                       "Please provide a conversational and helpful response that continues the conversation naturally. " +
+                       "If the question is about code, provide code examples. If it's about explaining concepts, provide clear explanations. " +
+                       "If it's about improving or modifying code, provide the improved code with explanations.";
             default:
                 return "You are an expert code analyst providing professional code analysis.";
         }

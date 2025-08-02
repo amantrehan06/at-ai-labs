@@ -100,7 +100,7 @@ public class OpenAIChatService implements AIChatService {
                         @Override
                         public void onNext(String token) {
                             // Emit each token as a content chunk
-                            logger.info("Emitting content: "+token);
+                           // logger.info("Emitting content: "+token);
                             emitter.next(StreamingAnalysisResponse.contentChunk(token, request.getAnalysisType(), request.getLanguage()));
                         }
 

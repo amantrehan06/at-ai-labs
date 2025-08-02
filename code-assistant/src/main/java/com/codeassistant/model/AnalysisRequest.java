@@ -27,6 +27,10 @@ public class AnalysisRequest {
     @JsonProperty("language")
     private String language;
     
+    @NotBlank(message = "Session ID cannot be blank")
+    @JsonProperty("sessionId")
+    private String sessionId;
+    
     @JsonProperty("apiKey")
     private String apiKey;
 } 
