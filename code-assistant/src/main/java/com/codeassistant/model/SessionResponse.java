@@ -9,33 +9,27 @@ import lombok.NoArgsConstructor;
 import java.time.Instant;
 
 /**
- * Response model for code analysis results.
+ * Response model for session operations.
  */
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class AnalysisResponse {
-    
-    @JsonProperty("analysis")
-    private String analysis;
-    
-    @JsonProperty("analysisType")
-    private AnalysisType analysisType;
-    
-    @JsonProperty("language")
-    private String language;
-    
-    @JsonProperty("success")
-    private boolean success;
+public class SessionResponse {
     
     @JsonProperty("sessionId")
     private String sessionId;
     
-    @JsonProperty("conversationContext")
-    private String conversationContext;
+    @JsonProperty("message")
+    private String message;
+    
+    @JsonProperty("success")
+    private boolean success;
     
     @JsonProperty("timestamp")
     @Builder.Default
     private long timestamp = Instant.now().toEpochMilli();
+    
+    @JsonProperty("activeSessionCount")
+    private int activeSessionCount;
 } 
