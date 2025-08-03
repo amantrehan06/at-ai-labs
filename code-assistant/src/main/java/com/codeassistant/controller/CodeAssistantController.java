@@ -2,7 +2,6 @@ package com.codeassistant.controller;
 
 import com.codeassistant.model.AnalysisRequest;
 import com.codeassistant.model.AnalysisResponse;
-import com.codeassistant.model.SessionResponse;
 import com.codeassistant.model.StreamingAnalysisResponse;
 import com.codeassistant.service.CodeAnalysisService;
 import com.codeassistant.service.SessionManager;
@@ -27,6 +26,10 @@ import com.codeassistant.model.AnalysisType;
  * 
  * All endpoints require a specific service to be specified in the URL path.
  * Supported services: OpenAIChatService, GroqAIChatService
+ * 
+ * The AnalysisType in the request determines the operation:
+ * - WRITE_CODE, REFACTOR, DEBUG, ANALYZE: Regular code analysis operations
+ * - FOLLOWUP: Follow-up questions in an ongoing conversation
  */
 @RestController
 @RequestMapping("/api/v1/code")
@@ -45,133 +48,17 @@ public class CodeAssistantController {
     }
     
     /**
-     * Health check endpoint
-     */
-    @GetMapping("/health")
-    public ResponseEntity<String> health() {
-        boolean hasService = codeAnalysisService.hasAvailableService();
-        int serviceCount = codeAnalysisService.getAvailableServiceCount();
-        int sessionCount = sessionManager.getActiveSessionCount();
-        
-        if (hasService) {
-            return ResponseEntity.ok(String.format("Service is healthy with %d AI services available and %d active sessions", 
-                serviceCount, sessionCount));
-        } else {
-            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
-                .body("Service is running but no AI services are available");
-        }
-    }
-    
-    /**
-     * Create a new session
-     */
-    @PostMapping("/sessions")
-    public ResponseEntity<SessionResponse> createSession() {
-        try {
-            String sessionId = sessionManager.createSession();
-            SessionResponse response = SessionResponse.builder()
-                .sessionId(sessionId)
-                .message("Session created successfully")
-                .success(true)
-                .activeSessionCount(sessionManager.getActiveSessionCount())
-                .build();
-            
-            logger.info("Created new session: {}", sessionId);
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            logger.error("Error creating session", e);
-            SessionResponse errorResponse = SessionResponse.builder()
-                .message("Error creating session: " + e.getMessage())
-                .success(false)
-                .activeSessionCount(sessionManager.getActiveSessionCount())
-                .build();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
-        }
-    }
-    
-    /**
-     * Clear a specific session
-     */
-    @DeleteMapping("/sessions/{sessionId}")
-    public ResponseEntity<SessionResponse> clearSession(@PathVariable("sessionId") String sessionId) {
-        try {
-            boolean cleared = sessionManager.clearSession(sessionId);
-            if (cleared) {
-                SessionResponse response = SessionResponse.builder()
-                    .sessionId(sessionId)
-                    .message("Session cleared successfully")
-                    .success(true)
-                    .activeSessionCount(sessionManager.getActiveSessionCount())
-                    .build();
-                return ResponseEntity.ok(response);
-            } else {
-                SessionResponse errorResponse = SessionResponse.builder()
-                    .sessionId(sessionId)
-                    .message("Session not found")
-                    .success(false)
-                    .activeSessionCount(sessionManager.getActiveSessionCount())
-                    .build();
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
-            }
-        } catch (Exception e) {
-            logger.error("Error clearing session: {}", sessionId, e);
-            SessionResponse errorResponse = SessionResponse.builder()
-                .sessionId(sessionId)
-                .message("Error clearing session: " + e.getMessage())
-                .success(false)
-                .activeSessionCount(sessionManager.getActiveSessionCount())
-                .build();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
-        }
-    }
-    
-    /**
-     * Clear all sessions
-     */
-    @DeleteMapping("/sessions")
-    public ResponseEntity<SessionResponse> clearAllSessions() {
-        try {
-            int clearedCount = sessionManager.clearAllSessions();
-            SessionResponse response = SessionResponse.builder()
-                .message("All sessions cleared successfully. Cleared " + clearedCount + " sessions")
-                .success(true)
-                .activeSessionCount(sessionManager.getActiveSessionCount())
-                .build();
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            logger.error("Error clearing all sessions", e);
-            SessionResponse errorResponse = SessionResponse.builder()
-                .message("Error clearing all sessions: " + e.getMessage())
-                .success(false)
-                .activeSessionCount(sessionManager.getActiveSessionCount())
-                .build();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
-        }
-    }
-    
-    /**
-     * Get session statistics
-     */
-    @GetMapping("/sessions/stats")
-    public ResponseEntity<Map<String, Object>> getSessionStats() {
-        Map<String, Object> stats = Map.of(
-            "activeSessionCount", sessionManager.getActiveSessionCount(),
-            "activeSessionIds", sessionManager.getActiveSessionIds(),
-            "availableServices", codeAnalysisService.getAvailableServiceCount(),
-            "hasServices", codeAnalysisService.hasAvailableService()
-        );
-        return ResponseEntity.ok(stats);
-    }
-    
-    /**
-     * Assist with specific AI service
+     * Assist with specific AI service (handles both regular operations and follow-ups)
      */
     @PostMapping("/assist/{service}")
     public ResponseEntity<AnalysisResponse> assistWithService(
             @PathVariable("service") String service,
             @Valid @RequestBody AnalysisRequest request) {
         try {
-            logger.info("=== REGULAR ASSIST REQUEST RECEIVED ===");
+            boolean isFollowUp = AnalysisType.FOLLOWUP.equals(request.getAnalysisType());
+            String operationType = isFollowUp ? "FOLLOW-UP" : "REGULAR";
+            
+            logger.info("=== {} ASSIST REQUEST RECEIVED ===", operationType);
             logger.info("Service: {}", service);
             logger.info("Session ID: {}", request.getSessionId());
             logger.info("Language: {}", request.getLanguage());
@@ -217,7 +104,7 @@ public class CodeAssistantController {
     }
     
     /**
-     * Streaming assist with specific AI service
+     * Streaming assist with specific AI service (handles both regular operations and follow-ups)
      */
     @PostMapping(value = "/assist/{service}/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public ResponseEntity<org.springframework.web.servlet.mvc.method.annotation.SseEmitter> streamAssistWithService(
@@ -226,8 +113,11 @@ public class CodeAssistantController {
         org.springframework.web.servlet.mvc.method.annotation.SseEmitter emitter = new org.springframework.web.servlet.mvc.method.annotation.SseEmitter();
         
         try {
-            logger.info("Received streaming assist request: {} using service: {} for session: {}", 
-                request.getAnalysisType(), service, request.getSessionId());
+            boolean isFollowUp = AnalysisType.FOLLOWUP.equals(request.getAnalysisType());
+            String operationType = isFollowUp ? "FOLLOW-UP" : "REGULAR";
+            
+            logger.info("Received streaming {} request: {} using service: {} for session: {}", 
+                operationType, request.getAnalysisType(), service, request.getSessionId());
             
             // Validate session exists
             if (!sessionManager.sessionExists(request.getSessionId())) {
@@ -283,89 +173,5 @@ public class CodeAssistantController {
         }
         
         return ResponseEntity.ok(emitter);
-    }
-    
-    /**
-     * Handle follow-up questions for an existing conversation
-     */
-    @PostMapping("/assist/{service}/followup")
-    public ResponseEntity<AnalysisResponse> followUpWithService(
-            @PathVariable("service") String service,
-            @Valid @RequestBody AnalysisRequest request) {
-        
-        logger.info("Follow-up request received - Service: {}, Session: {}, Question: {}", 
-            service, request.getSessionId(), request.getCode());
-        
-        // Validate session exists
-        if (!sessionManager.sessionExists(request.getSessionId())) {
-            logger.warn("Follow-up request with invalid session ID: {}", request.getSessionId());
-            return ResponseEntity.badRequest()
-                .body(AnalysisResponse.builder()
-                    .success(false)
-                    .analysis("Error: Invalid session ID. Please start a new conversation.")
-                    .sessionId(request.getSessionId())
-                    .build());
-        }
-        
-        try {
-            // For follow-ups, we use a special analysis type that indicates this is a follow-up question
-            AnalysisRequest followUpRequest = new AnalysisRequest(
-                request.getCode(), // Use the code field as the question content
-                AnalysisType.FOLLOWUP, // Special analysis type for follow-ups
-                request.getLanguage(),
-                request.getSessionId(),
-                request.getApiKey()
-            );
-            
-            AnalysisResponse response = codeAnalysisService.analyzeCode(followUpRequest);
-            
-            logger.info("Follow-up response generated - Session: {}", request.getSessionId());
-            return ResponseEntity.ok(response);
-            
-        } catch (AIServiceException e) {
-            logger.error("AI service error during follow-up: {}", e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(AnalysisResponse.builder()
-                    .success(false)
-                    .analysis("Error: " + e.getMessage())
-                    .sessionId(request.getSessionId())
-                    .build());
-        } catch (Exception e) {
-            logger.error("Unexpected error during follow-up: {}", e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(AnalysisResponse.builder()
-                    .success(false)
-                    .analysis("Error: An unexpected error occurred")
-                    .sessionId(request.getSessionId())
-                    .build());
-        }
-    }
-
-    /**
-     * Get available AI services
-     */
-    @GetMapping("/services")
-    public ResponseEntity<Map<String, String>> getAvailableServices() {
-        Map<String, AIChatService> services = codeAnalysisService.getAvailableServices();
-        Map<String, String> serviceInfo = services.entrySet().stream()
-            .collect(java.util.stream.Collectors.toMap(
-                Map.Entry::getKey,
-                entry -> entry.getValue().getClass().getSimpleName()
-            ));
-        return ResponseEntity.ok(serviceInfo);
-    }
-    
-    /**
-     * Get service statistics
-     */
-    @GetMapping("/services/stats")
-    public ResponseEntity<Map<String, Object>> getServiceStats() {
-        Map<String, Object> stats = Map.of(
-            "availableServices", codeAnalysisService.getAvailableServiceCount(),
-            "hasServices", codeAnalysisService.hasAvailableService(),
-            "services", codeAnalysisService.getAvailableServices().keySet(),
-            "activeSessionCount", sessionManager.getActiveSessionCount()
-        );
-        return ResponseEntity.ok(stats);
     }
 } 

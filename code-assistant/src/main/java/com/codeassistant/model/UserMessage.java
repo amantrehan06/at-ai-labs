@@ -24,9 +24,6 @@ public class UserMessage {
     @JsonProperty("content")
     private String content;
     
-    @JsonProperty("code")
-    private String code;
-    
     @JsonProperty("language")
     private String language;
     
@@ -61,22 +58,13 @@ public class UserMessage {
         
         content.append(":\n\n");
         
-        if (analysisType == AnalysisType.WRITE_CODE) {
-            content.append("Requirements:\n");
-            content.append(code);
-            content.append("\n\nPlease generate the code in ").append(language).append(".");
-        } else if (analysisType == AnalysisType.FOLLOWUP) {
-            content.append(code);
-            content.append("\n\nPlease provide a helpful response to this follow-up question.");
-        } else {
-            content.append("```").append(language).append("\n");
-            content.append(code);
-            content.append("\n```");
-        }
+        // Consistent code formatting for all types
+        content.append("```").append(language).append("\n");
+        content.append(code);
+        content.append("\n```");
         
         return UserMessage.builder()
             .content(content.toString())
-            .code(code)
             .language(language)
             .analysisType(analysisType)
             .build();
