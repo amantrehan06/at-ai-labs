@@ -140,9 +140,9 @@
             padding: 15px; /* Reduced from 20px */
             box-shadow: 0 8px 25px rgba(0,0,0,0.2);
             position: relative;
-            overflow: hidden;
             display: flex;
             flex-direction: column;
+            min-height: 500px; /* Ensure minimum height for content */
         }
 
         .input-section::before, .output-section::before {
@@ -369,8 +369,6 @@
             font-family: 'Courier New', monospace;
             line-height: 1.5;
             color: #333;
-            max-height: 350px;
-            overflow-y: auto;
             font-size: 15px; /* Increased from default */
         }
 
@@ -560,7 +558,7 @@
         }
 
         .message-content.expanded {
-            max-height: 1000px;
+            max-height: none;
             padding: 12px 12px 15px 12px; /* Reduced bottom padding from 25px to 15px */
         }
 
@@ -1117,10 +1115,19 @@
         }
         
         async function analyzeCode(type) {
-            const selectedService = document.querySelector('.service-option.selected').dataset.service;
+            const selectedServiceElement = document.querySelector('.service-option.selected');
+            const selectedService = selectedServiceElement ? selectedServiceElement.dataset.service : 'OpenAIChatService';
             const isStreaming = document.getElementById('streamingToggle').classList.contains('active');
             const apiKey = document.getElementById('apiKey').value;
             const language = document.getElementById('language').value;
+            
+            // Debug: Log the selected service details
+            console.log('🔍 Service selection debug (main):', {
+                selectedServiceElement: selectedServiceElement,
+                selectedService: selectedService,
+                serviceName: selectedServiceElement ? selectedServiceElement.querySelector('.name').textContent : 'Unknown',
+                isSelected: selectedServiceElement ? selectedServiceElement.classList.contains('selected') : false
+            });
             
             // Check if we have follow-up input available and use it
             const followUpInput = document.getElementById('followUpInput');
@@ -1432,21 +1439,25 @@
                                         streamingContent += data.content;
                                         hasReceivedContent = true;
                                         
-                                        // Update the streaming message content
+                                        // Apply markdown formatting on each chunk for better UX
                                         const streamingMessage = container.lastElementChild;
                                         if (streamingMessage && streamingMessage.querySelector('.message-title').textContent.includes('Streaming')) {
                                             const contentDiv = streamingMessage.querySelector('.message-content');
+                                            // Apply markdown formatting on each chunk
                                             contentDiv.innerHTML = parseMarkdown(streamingContent);
                                         }
                                     } else if (data.eventType === 'complete') {
                                         console.log('✅ Received complete event');
                                         clearTimeout(timeout);
                                         
-                                        // Update the streaming message to show completion
+                                        // Final formatting on completion
                                         const streamingMessage = container.lastElementChild;
                                         if (streamingMessage && streamingMessage.querySelector('.message-title').textContent.includes('Streaming')) {
                                             const titleDiv = streamingMessage.querySelector('.message-title');
+                                            const contentDiv = streamingMessage.querySelector('.message-content');
                                             titleDiv.textContent = `✅ ${type.toUpperCase()} Result (Complete)`;
+                                            // Apply final markdown formatting
+                                            contentDiv.innerHTML = parseMarkdown(streamingContent);
                                         }
                                         return;
                                     } else if (data.eventType === 'error') {
@@ -1622,25 +1633,64 @@
                 return;
             }
             
-            const selectedService = document.querySelector('.service-option.selected').dataset.service;
+            const selectedServiceElement = document.querySelector('.service-option.selected');
+            const selectedService = selectedServiceElement ? selectedServiceElement.dataset.service : 'OpenAIChatService';
+            const isStreaming = document.getElementById('streamingToggle').classList.contains('active');
             const apiKey = document.getElementById('apiKey').value;
             const language = document.getElementById('language').value;
             
-            // Add user message to conversation
-            addMessageToConversation('user', '💬 You', followUpText, new Date().toLocaleTimeString());
+            // Debug: Log the selected service details
+            console.log('🔍 Service selection debug:', {
+                selectedServiceElement: selectedServiceElement,
+                selectedService: selectedService,
+                serviceName: selectedServiceElement ? selectedServiceElement.querySelector('.name').textContent : 'Unknown',
+                isSelected: selectedServiceElement ? selectedServiceElement.classList.contains('selected') : false
+            });
             
-            // Show loading message
-            addMessageToConversation('ai', '⏳ AI is thinking...', 'Processing your request...', new Date().toLocaleTimeString());
+            // Check if streaming is allowed for the selected service
+            const streamingAllowed = selectedService === 'OpenAIChatService';
+            const shouldUseStreaming = isStreaming && streamingAllowed;
             
             console.log('🔄 Starting follow-up request:', {
                 service: selectedService,
                 language: language,
                 questionLength: followUpText.length,
-                sessionId: currentSessionId
+                sessionId: currentSessionId,
+                isStreaming: isStreaming,
+                streamingAllowed: streamingAllowed,
+                shouldUseStreaming: shouldUseStreaming
             });
             
+            // Add user message to conversation
+            addMessageToConversation('user', '💬 You', followUpText, new Date().toLocaleTimeString());
+            
+            if (shouldUseStreaming) {
+                // Use streaming for follow-up
+                console.log('🔄 Using streaming mode for follow-up');
+                try {
+                    await askFollowUpStreaming(selectedService, apiKey, language, followUpText);
+                } catch (error) {
+                    console.log('❌ Streaming follow-up failed, falling back to regular mode:', error);
+                    await askFollowUpRegular(selectedService, apiKey, language, followUpText);
+                }
+            } else {
+                // Use regular non-streaming for follow-up
+                console.log('📝 Using regular mode for follow-up');
+                await askFollowUpRegular(selectedService, apiKey, language, followUpText);
+            }
+            
+            // Clear the follow-up input after processing
+            followUpInput.value = '';
+        }
+        
+        async function askFollowUpRegular(selectedService, apiKey, language, followUpText) {
+            console.log('📝 Using regular mode for follow-up');
+            
+            // Show loading message
+            addMessageToConversation('ai', '⏳ AI is thinking...', 'Processing your request...', new Date().toLocaleTimeString());
+            
             try {
-                const url = `${API_BASE}/assist/${selectedService}/followup`;
+                const url = `${API_BASE}/assist/${selectedService}`;
                 
                 console.log('🌐 Follow-up request URL:', url);
                 console.log('📋 Follow-up request payload:', {
@@ -1660,7 +1710,7 @@
                         language: language,
                         sessionId: currentSessionId,
                         apiKey: apiKey,
-                        analysisType: 'FOLLOWUP'
+                        analysisType: 'FOLLOWUP' // Use FOLLOWUP analysis type
                     })
                 });
                 
@@ -1693,9 +1743,6 @@
                 
                 addMessageToConversation('ai', '🤖 AI Response', aiContent, new Date().toLocaleTimeString());
                 
-                // Clear the follow-up input after processing
-                followUpInput.value = '';
-                
             } catch (error) {
                 console.error('❌ Follow-up error:', error);
                 
@@ -1706,6 +1753,241 @@
                     container.removeChild(loadingMessage);
                 }
                 
+                addMessageToConversation('error', '❌ Error', `Error: ${error.message}`, new Date().toLocaleTimeString());
+            }
+        }
+
+        async function askFollowUpStreaming(selectedService, apiKey, language, followUpText) {
+            console.log('🔄 Using streaming mode for follow-up');
+            
+            // Show loading message
+            addMessageToConversation('ai', '⏳ AI is thinking...', 'Processing your request...', new Date().toLocaleTimeString());
+            
+            // Set a timeout for the follow-up streaming request
+            const followUpTimeout = setTimeout(() => {
+                console.log('⏰ Follow-up streaming request timed out after 30 seconds');
+                addMessageToConversation('error', '❌ Timeout', 'Follow-up request timed out. Please try again.', new Date().toLocaleTimeString());
+            }, 30000); // 30 seconds timeout
+            
+            try {
+                const url = `${API_BASE}/assist/${selectedService}/stream`;
+                
+                console.log('🌐 Streaming follow-up request URL:', url);
+                console.log('📋 Streaming follow-up request payload:', {
+                    question: followUpText,
+                    language: language,
+                    sessionId: currentSessionId,
+                    hasApiKey: !!apiKey
+                });
+                
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        code: followUpText, // Use the follow-up text as code
+                        language: language,
+                        sessionId: currentSessionId,
+                        apiKey: apiKey,
+                        analysisType: 'FOLLOWUP' // Use FOLLOWUP analysis type
+                    })
+                });
+                
+                console.log('📥 Streaming follow-up response status:', response.status);
+                
+                if (!response.ok) {
+                    clearTimeout(followUpTimeout);
+                    const errorText = await response.text();
+                    console.error('❌ Streaming follow-up HTTP error:', response.status, errorText);
+                    throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
+                }
+                
+                // Remove the loading message and add the AI response
+                const container = document.getElementById('conversationContainer');
+                const loadingMessage = container.lastElementChild;
+                if (loadingMessage && loadingMessage.querySelector('.message-title').textContent === '⏳ AI is thinking...') {
+                    container.removeChild(loadingMessage);
+                }
+                
+                // Add streaming message
+                addMessageToConversation('ai', '🔄 Follow-up Processing (Streaming)', 'Receiving streaming data...', new Date().toLocaleTimeString());
+                
+                // Handle Server-Sent Events using ReadableStream
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let streamingContent = '';
+                let hasReceivedContent = false;
+                let buffer = '';
+                let chunkCount = 0;
+                let totalBytesReceived = 0;
+                
+                console.log('📡 Starting SSE stream processing for follow-up...');
+                
+                try {
+                    while (true) {
+                        const { done, value } = await reader.read();
+                        
+                        if (done) {
+                            console.log('📡 Streaming follow-up stream completed by server');
+                            break;
+                        }
+                        
+                        const chunk = decoder.decode(value, { stream: true });
+                        buffer += chunk;
+                        chunkCount++;
+                        totalBytesReceived += value.length;
+                        
+                        console.log(`📦 Received chunk #${chunkCount} for follow-up:`, {
+                            chunkLength: chunk.length,
+                            bufferLength: buffer.length,
+                            totalBytesReceived: totalBytesReceived,
+                            hasNewlines: chunk.includes('\n')
+                        });
+                        
+                        // Process complete lines from buffer
+                        const lines = buffer.split('\n');
+                        buffer = lines.pop() || ''; // Keep incomplete line in buffer
+                        
+                        console.log(`📝 Processing ${lines.length} complete lines from buffer for follow-up`);
+                        
+                        for (const line of lines) {
+                            const trimmedLine = line.trim();
+                            
+                            // Skip empty lines
+                            if (!trimmedLine) {
+                                continue;
+                            }
+                            
+                            console.log('🔍 Processing SSE line for follow-up:', trimmedLine);
+                            
+                            // Handle SSE data lines
+                            if (trimmedLine.startsWith('data:')) {
+                                const dataContent = trimmedLine.substring(5);
+                                
+                                console.log('📄 Data content before parsing for follow-up:', dataContent);
+                                
+                                // Skip empty data
+                                if (!dataContent) {
+                                    continue;
+                                }
+                                
+                                try {
+                                    const data = JSON.parse(dataContent);
+                                    console.log('✅ Parsed SSE data for follow-up:', {
+                                        eventType: data.eventType,
+                                        contentLength: data.content?.length || 0,
+                                        analysisType: data.analysisType,
+                                        language: data.language,
+                                        success: data.success,
+                                        complete: data.complete
+                                    });
+                                    
+                                    if (data.eventType === 'content') {
+                                        console.log('📝 Received content chunk for follow-up:', data.content);
+                                        streamingContent += data.content;
+                                        hasReceivedContent = true;
+                                        
+                                        // Apply markdown formatting on each chunk for better UX
+                                        const streamingMessage = container.lastElementChild;
+                                        if (streamingMessage && streamingMessage.querySelector('.message-title').textContent.includes('Streaming')) {
+                                            const contentDiv = streamingMessage.querySelector('.message-content');
+                                            // Apply markdown formatting on each chunk
+                                            contentDiv.innerHTML = parseMarkdown(streamingContent);
+                                        }
+                                    } else if (data.eventType === 'complete') {
+                                        console.log('✅ Received complete event for follow-up');
+                                        clearTimeout(followUpTimeout);
+                                        
+                                        // Final formatting on completion
+                                        const streamingMessage = container.lastElementChild;
+                                        if (streamingMessage && streamingMessage.querySelector('.message-title').textContent.includes('Streaming')) {
+                                            const titleDiv = streamingMessage.querySelector('.message-title');
+                                            const contentDiv = streamingMessage.querySelector('.message-content');
+                                            titleDiv.textContent = `✅ Follow-up Result (Complete)`;
+                                            // Apply final markdown formatting
+                                            contentDiv.innerHTML = parseMarkdown(streamingContent);
+                                        }
+                                        return;
+                                    } else if (data.eventType === 'error') {
+                                        console.log('❌ Received error event for follow-up:', data.error);
+                                        clearTimeout(followUpTimeout);
+                                        addMessageToConversation('error', '❌ Error', `Error: ${data.error}`, new Date().toLocaleTimeString());
+                                        return;
+                                    }
+                                } catch (parseError) {
+                                    console.log('❌ Could not parse SSE data for follow-up:', trimmedLine, parseError);
+                                    console.log('📄 Data content was:', dataContent);
+                                }
+                            } else {
+                                console.log('⚠️ Non-data line for follow-up:', trimmedLine);
+                            }
+                        }
+                    }
+                    
+                    // Process any remaining buffer content for follow-up
+                    if (buffer.trim()) {
+                        console.log('📄 Processing remaining buffer content for follow-up:', buffer.trim());
+                        const trimmedLine = buffer.trim();
+                        if (trimmedLine.startsWith('data:')) {
+                            const dataContent = trimmedLine.substring(5);
+                            if (dataContent) {
+                                try {
+                                    const data = JSON.parse(dataContent);
+                                    if (data.eventType === 'content') {
+                                        streamingContent += data.content;
+                                        hasReceivedContent = true;
+                                        console.log('📝 Final content chunk for follow-up:', data.content);
+                                    }
+                                } catch (parseError) {
+                                    console.log('❌ Could not parse final SSE data for follow-up:', trimmedLine, parseError);
+                                }
+                            }
+                        }
+                    }
+                    
+                    // If we reach here, show the final result for follow-up
+                    clearTimeout(followUpTimeout);
+                    console.log('📊 Streaming follow-up summary:', {
+                        chunkCount: chunkCount,
+                        totalBytesReceived: totalBytesReceived,
+                        hasReceivedContent: hasReceivedContent,
+                        finalContentLength: streamingContent.length
+                    });
+                    
+                    if (hasReceivedContent) {
+                        // Update the streaming message to show completion for follow-up
+                        const streamingMessage = container.lastElementChild;
+                        if (streamingMessage && streamingMessage.querySelector('.message-title').textContent.includes('Streaming')) {
+                            const titleDiv = streamingMessage.querySelector('.message-title');
+                            titleDiv.textContent = `✅ Follow-up Result (Complete)`;
+                        }
+                    } else {
+                        console.log('❌ No content received from streaming follow-up response');
+                        addMessageToConversation('error', '❌ Error', 'No content received from streaming follow-up response', new Date().toLocaleTimeString());
+                    }
+                    
+                } catch (streamError) {
+                    clearTimeout(followUpTimeout);
+                    console.error('❌ Streaming follow-up error:', streamError);
+                    if (hasReceivedContent) {
+                        // Update the streaming message to show partial completion for follow-up
+                        const streamingMessage = container.lastElementChild;
+                        if (streamingMessage && streamingMessage.querySelector('.message-title').textContent.includes('Streaming')) {
+                            const titleDiv = streamingMessage.querySelector('.message-title');
+                            titleDiv.textContent = `✅ Follow-up Result (Partial)`;
+                        }
+                    } else {
+                        addMessageToConversation('error', '❌ Error', `Streaming follow-up error: ${streamError.message}`, new Date().toLocaleTimeString());
+                    }
+                } finally {
+                    reader.releaseLock();
+                    console.log('🔒 Reader lock released for follow-up');
+                }
+                
+            } catch (error) {
+                clearTimeout(followUpTimeout);
+                console.error('❌ Request error for follow-up:', error);
                 addMessageToConversation('error', '❌ Error', `Error: ${error.message}`, new Date().toLocaleTimeString());
             }
         }
