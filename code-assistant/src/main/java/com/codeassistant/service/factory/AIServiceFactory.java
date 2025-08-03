@@ -37,28 +37,6 @@ public class AIServiceFactory {
     }
     
     /**
-     * Gets the best available AI service based on priority.
-     * Priority order: OpenAI > Groq
-     * 
-     * @return The best available AI service
-     * @throws AIServiceException if no services are available
-     */
-    public AIChatService getBestAvailableService() throws AIServiceException {
-        // Priority order: OpenAI > Groq
-        if (availableServices.containsKey("OpenAIChatService")) {
-            logger.debug("Using OpenAI service");
-            return availableServices.get("OpenAIChatService");
-        }
-        
-        if (availableServices.containsKey("GroqAIChatService")) {
-            logger.debug("Using Groq AI service (Llama models)");
-            return availableServices.get("GroqAIChatService");
-        }
-        
-        throw new AIServiceException("No AI services are available. Please check your configuration.");
-    }
-    
-    /**
      * Gets a specific AI service by name.
      * 
      * @param serviceName The name of the service (e.g., "OpenAIChatService", "GroqAIChatService")

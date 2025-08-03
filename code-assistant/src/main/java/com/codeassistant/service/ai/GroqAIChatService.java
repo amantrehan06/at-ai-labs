@@ -61,6 +61,15 @@ public class GroqAIChatService implements AIChatService {
             // Use the strategy to build messages (maintains Strategy pattern)
             List<ChatMessage> messages = strategy.buildMessages(request).toLangChain4jMessages();
             
+            // Log the actual LLM prompt after strategy processing
+            logger.info("LLM prompt sent - Session: {}, Type: {}, Language: {}", 
+                request.getSessionId(), request.getAnalysisType(), request.getLanguage());
+            logger.info("=== FULL PROMPT SENT TO LLM ===");
+            messages.forEach(message -> {
+                logger.info("{}: {}", message.type(), message.text());
+            });
+            logger.info("=== END OF PROMPT ===");
+            
             Response<AiMessage> response = chatModel.generate(messages);
             
             String analysis = response.content().text();

@@ -35,68 +35,10 @@ public class CodeAnalysisService {
     }
     
     /**
-     * Analyzes code using the best available AI service with session memory.
-     * 
-     * @param request The analysis request
-     * @return AnalysisResponse with the results
-     * @throws AIServiceException if no AI service is available or session is invalid
-     */
-    public AnalysisResponse analyzeCode(AnalysisRequest request) throws AIServiceException {
-        logger.debug("Analyzing code with request: {} for session: {}", request.getAnalysisType(), request.getSessionId());
-        
-        // Validate session exists
-        if (!sessionManager.sessionExists(request.getSessionId())) {
-            throw new AIServiceException("Session not found: " + request.getSessionId());
-        }
-        
-        try {
-            AIChatService service = aiServiceFactory.getBestAvailableService();
-            logger.info("Using AI service: {} for session: {}", service.getClass().getSimpleName(), request.getSessionId());
-            
-            // Get session memory and enhance request with conversation context
-            ChatMemory sessionMemory = sessionManager.getSessionMemory(request.getSessionId());
-            AnalysisRequest enhancedRequest = enhanceRequestWithMemory(request, sessionMemory);
-            
-            // Log the exact prompt being sent to the LLM
-            logger.info("LLM prompt sent - Session: {}, Type: {}, Language: {}, Prompt length: {}", 
-                request.getSessionId(), enhancedRequest.getAnalysisType(), enhancedRequest.getLanguage(), enhancedRequest.getCode().length());
-            logger.info("=== FULL PROMPT SENT TO LLM ===");
-            logger.info(enhancedRequest.getCode());
-            logger.info("=== END OF PROMPT ===");
-            
-            AnalysisResponse response = service.analyzeCode(enhancedRequest);
-            
-            // Log the LLM response
-            logger.info("LLM response received - Session: {}, Response length: {}", 
-                request.getSessionId(), response.getAnalysis().length());
-            logger.info("=== LLM RESPONSE ===");
-            logger.info(response.getAnalysis());
-            logger.info("=== END OF RESPONSE ===");
-            
-            // Add messages to chat memory for future follow-ups
-            addToChatMemory(sessionMemory, request, response);
-            
-            // Update response with session information
-            response.setSessionId(request.getSessionId());
-            response.setConversationContext("Session: " + request.getSessionId() + " | Messages in memory: " + 
-                (sessionMemory.messages().size() + 1)); // +1 for current message
-            
-            logger.debug("Analysis completed successfully for session: {}", request.getSessionId());
-            return response;
-        } catch (AIServiceException e) {
-            logger.error("AI service failed to analyze code for session: {}", request.getSessionId(), e);
-            throw e;
-        } catch (Exception e) {
-            logger.error("Unexpected error during code analysis for session: {}", request.getSessionId(), e);
-            throw new AIServiceException("Unexpected error during code analysis: " + e.getMessage(), e);
-        }
-    }
-    
-    /**
      * Analyzes code using a specific AI service with session memory.
      * 
      * @param request The analysis request
-     * @param serviceName The name of the service to use (e.g., "OpenAIChatService", "LlamaAIChatService")
+     * @param serviceName The name of the service to use (e.g., "OpenAIChatService", "GroqAIChatService")
      * @return AnalysisResponse with the results
      * @throws AIServiceException if the service is not available or session is invalid
      */
@@ -117,13 +59,6 @@ public class CodeAnalysisService {
             ChatMemory sessionMemory = sessionManager.getSessionMemory(request.getSessionId());
             AnalysisRequest enhancedRequest = enhanceRequestWithMemory(request, sessionMemory);
             
-            // Log the exact prompt being sent to the LLM
-            logger.info("LLM prompt sent - Session: {}, Type: {}, Language: {}, Prompt length: {}", 
-                request.getSessionId(), enhancedRequest.getAnalysisType(), enhancedRequest.getLanguage(), enhancedRequest.getCode().length());
-            logger.info("=== FULL PROMPT SENT TO LLM ===");
-            logger.info(enhancedRequest.getCode());
-            logger.info("=== END OF PROMPT ===");
-            
             AnalysisResponse response = service.analyzeCode(enhancedRequest);
             
             // Log the LLM response
@@ -153,84 +88,10 @@ public class CodeAnalysisService {
     }
     
     /**
-     * Streams code analysis using the best available AI service with session memory.
-     * 
-     * @param request The analysis request
-     * @return Flux of StreamingAnalysisResponse for real-time streaming
-     * @throws AIServiceException if no AI service is available or session is invalid
-     */
-    public Flux<StreamingAnalysisResponse> streamAnalysis(AnalysisRequest request) throws AIServiceException {
-        logger.debug("Streaming analysis with request: {} for session: {}", request.getAnalysisType(), request.getSessionId());
-        
-        // Validate session exists
-        if (!sessionManager.sessionExists(request.getSessionId())) {
-            throw new AIServiceException("Session not found: " + request.getSessionId());
-        }
-        
-        try {
-            AIChatService service = aiServiceFactory.getBestAvailableService();
-            logger.info("Using AI service for streaming: {} for session: {}", service.getClass().getSimpleName(), request.getSessionId());
-            
-            // Get session memory and enhance request with conversation context
-            ChatMemory sessionMemory = sessionManager.getSessionMemory(request.getSessionId());
-            AnalysisRequest enhancedRequest = enhanceRequestWithMemory(request, sessionMemory);
-            
-            // Log the exact prompt being sent to the LLM
-            logger.info("LLM prompt sent - Session: {}, Type: {}, Language: {}, Prompt length: {}", 
-                request.getSessionId(), enhancedRequest.getAnalysisType(), enhancedRequest.getLanguage(), enhancedRequest.getCode().length());
-            logger.info("=== FULL PROMPT SENT TO LLM ===");
-            logger.info(enhancedRequest.getCode());
-            logger.info("=== END OF PROMPT ===");
-            
-            Flux<StreamingAnalysisResponse> response = service.streamAnalysis(enhancedRequest);
-            
-            // Collect the full response and add to memory after completion
-            return response.collectList()
-                .flatMapMany(streamingResponses -> {
-                    // Combine all streaming responses into a single analysis
-                    StringBuilder fullAnalysis = new StringBuilder();
-                    for (StreamingAnalysisResponse streamingResponse : streamingResponses) {
-                        if (streamingResponse.getContent() != null) {
-                            fullAnalysis.append(streamingResponse.getContent());
-                        }
-                    }
-                    
-                    // Log the complete LLM response
-                    String completeResponse = fullAnalysis.toString();
-                    logger.info("LLM response received - Session: {}, Response length: {}", 
-                        request.getSessionId(), completeResponse.length());
-                    logger.info("=== LLM RESPONSE ===");
-                    logger.info(completeResponse);
-                    logger.info("=== END OF RESPONSE ===");
-                    
-                    // Create a mock AnalysisResponse for memory storage
-                    AnalysisResponse mockResponse = AnalysisResponse.builder()
-                        .analysis(completeResponse)
-                        .success(true)
-                        .sessionId(request.getSessionId())
-                        .build();
-                    
-                    // Add to chat memory
-                    addToChatMemory(sessionMemory, request, mockResponse);
-                    
-                    // Return the original streaming responses
-                    return Flux.fromIterable(streamingResponses);
-                });
-            
-        } catch (AIServiceException e) {
-            logger.error("AI service failed to stream analysis for session: {}", request.getSessionId(), e);
-            throw e;
-        } catch (Exception e) {
-            logger.error("Unexpected error during streaming analysis for session: {}", request.getSessionId(), e);
-            throw new AIServiceException("Unexpected error during streaming analysis: " + e.getMessage(), e);
-        }
-    }
-    
-    /**
      * Streams code analysis using a specific AI service with session memory.
      * 
      * @param request The analysis request
-     * @param serviceName The name of the service to use (e.g., "OpenAIChatService", "LlamaAIChatService")
+     * @param serviceName The name of the service to use (e.g., "OpenAIChatService", "GroqAIChatService")
      * @return Flux of StreamingAnalysisResponse for real-time streaming
      * @throws AIServiceException if the service is not available or session is invalid
      */
@@ -251,46 +112,41 @@ public class CodeAnalysisService {
             ChatMemory sessionMemory = sessionManager.getSessionMemory(request.getSessionId());
             AnalysisRequest enhancedRequest = enhanceRequestWithMemory(request, sessionMemory);
             
-            // Log the exact prompt being sent to the LLM
-            logger.info("LLM prompt sent - Session: {}, Type: {}, Language: {}, Prompt length: {}", 
-                request.getSessionId(), enhancedRequest.getAnalysisType(), enhancedRequest.getLanguage(), enhancedRequest.getCode().length());
-            logger.info("=== FULL PROMPT SENT TO LLM ===");
-            logger.info(enhancedRequest.getCode());
-            logger.info("=== END OF PROMPT ===");
-            
             Flux<StreamingAnalysisResponse> response = service.streamAnalysis(enhancedRequest);
             
-            // Collect the full response and add to memory after completion
-            return response.collectList()
-                .flatMapMany(streamingResponses -> {
-                    // Combine all streaming responses into a single analysis
-                    StringBuilder fullAnalysis = new StringBuilder();
-                    for (StreamingAnalysisResponse streamingResponse : streamingResponses) {
-                        if (streamingResponse.getContent() != null) {
-                            fullAnalysis.append(streamingResponse.getContent());
-                        }
+            // Stream immediately and collect for memory storage
+            StringBuilder fullResponseBuilder = new StringBuilder();
+            
+            return response
+                .doOnNext(chunk -> {
+                    // Log each chunk as it's emitted (for debugging)
+                    if (chunk.getContent() != null) {
+                        logger.debug("Streaming chunk - Session: {}, Chunk length: {}", 
+                            request.getSessionId(), chunk.getContent().length());
+                        // Collect the full response for memory storage
+                        fullResponseBuilder.append(chunk.getContent());
                     }
-                    
-                    // Log the complete LLM response
-                    String completeResponse = fullAnalysis.toString();
-                    logger.info("LLM response received - Session: {}, Response length: {}", 
-                        request.getSessionId(), completeResponse.length());
-                    logger.info("=== LLM RESPONSE ===");
-                    logger.info(completeResponse);
-                    logger.info("=== END OF RESPONSE ===");
-                    
-                    // Create a mock AnalysisResponse for memory storage
-                    AnalysisResponse mockResponse = AnalysisResponse.builder()
-                        .analysis(completeResponse)
-                        .success(true)
-                        .sessionId(request.getSessionId())
-                        .build();
-                    
-                    // Add to chat memory
-                    addToChatMemory(sessionMemory, request, mockResponse);
-                    
-                    // Return the original streaming responses
-                    return Flux.fromIterable(streamingResponses);
+                })
+                .doOnComplete(() -> {
+                    // Handle memory storage after streaming is complete
+                    String completeResponse = fullResponseBuilder.toString();
+                    if (!completeResponse.isEmpty()) {
+                        logger.info("LLM response received - Session: {}, Response length: {}", 
+                            request.getSessionId(), completeResponse.length());
+                        logger.info("=== LLM RESPONSE ===");
+                        logger.info(completeResponse);
+                        logger.info("=== END OF RESPONSE ===");
+                        
+                        // Create a mock AnalysisResponse for memory storage
+                        AnalysisResponse mockResponse = AnalysisResponse.builder()
+                            .analysis(completeResponse)
+                            .success(true)
+                            .sessionId(request.getSessionId())
+                            .build();
+                        
+                        // Add to chat memory
+                        addToChatMemory(sessionMemory, request, mockResponse);
+                    }
                 });
             
         } catch (AIServiceException e) {
@@ -304,82 +160,40 @@ public class CodeAnalysisService {
     
     /**
      * Enhances the analysis request with conversation memory context.
+     * This method works uniformly for all strategies and adds conversation context
+     * when memory exists, regardless of the analysis type.
      * 
      * @param request The original request
      * @param sessionMemory The session's chat memory
-     * @return Enhanced request with conversation context
+     * @return Enhanced request with conversation context (if memory exists)
      */
     private AnalysisRequest enhanceRequestWithMemory(AnalysisRequest request, ChatMemory sessionMemory) {
-        // For follow-up questions, we use a different approach
-        if (AnalysisType.FOLLOWUP.equals(request.getAnalysisType())) {
-            return handleFollowUpRequest(request, sessionMemory);
+        // If no memory exists, return the request as-is
+        if (sessionMemory.messages().isEmpty()) {
+            logger.info("No memory context available - Type: {}, Language: {}, Session: {}", 
+                request.getAnalysisType(), request.getLanguage(), request.getSessionId());
+            return request;
         }
         
-        // For regular requests, enhance the code with conversation context
+        // Add conversation context for any request with existing memory
         StringBuilder enhancedCode = new StringBuilder();
         
-        // Add conversation context if there are previous messages
-        if (!sessionMemory.messages().isEmpty()) {
-            enhancedCode.append("// Previous conversation context:\n");
-            sessionMemory.messages().forEach(message -> {
-                enhancedCode.append("// ").append(message.type()).append(": ").append(message.text()).append("\n");
-            });
-            enhancedCode.append("\n// Current request:\n");
-        }
+        // Add conversation context from previous messages
+        enhancedCode.append("// Previous conversation context:\n");
+        sessionMemory.messages().forEach(message -> {
+            enhancedCode.append("// ").append(message.type()).append(": ").append(message.text()).append("\n");
+        });
+        enhancedCode.append("\n// Current request:\n");
         
-        // Handle null code field (for follow-up requests)
+        // Add the current request content
         String codeContent = request.getCode() != null ? request.getCode() : "";
         enhancedCode.append(codeContent);
         
         String finalPrompt = enhancedCode.toString();
         
-        // Log the regular request enhancement
-        logger.info("Regular request enhanced - Type: {}, Language: {}, Session: {}, Memory: {} messages", 
+        // Log the memory enhancement
+        logger.info("Request enhanced with memory - Type: {}, Language: {}, Session: {}, Memory: {} messages", 
             request.getAnalysisType(), request.getLanguage(), request.getSessionId(), sessionMemory.messages().size());
-        
-        return new AnalysisRequest(
-            finalPrompt,
-            request.getAnalysisType(),
-            request.getLanguage(),
-            request.getSessionId(),
-            request.getApiKey()
-        );
-    }
-    
-    /**
-     * Handles follow-up requests with a special system prompt.
-     * 
-     * @param request The follow-up request
-     * @param sessionMemory The session's chat memory
-     * @return Enhanced request for follow-up
-     */
-    private AnalysisRequest handleFollowUpRequest(AnalysisRequest request, ChatMemory sessionMemory) {
-        StringBuilder enhancedCode = new StringBuilder();
-        
-        // Add a special system prompt for follow-ups
-        enhancedCode.append("// SYSTEM: This is a follow-up question in an ongoing conversation.\n");
-        enhancedCode.append("// Please provide a helpful response that builds on the previous conversation.\n");
-        enhancedCode.append("// Be conversational and helpful. If the question is about code, provide code examples.\n\n");
-        
-        // Add conversation context
-        if (!sessionMemory.messages().isEmpty()) {
-            enhancedCode.append("// Previous conversation context:\n");
-            sessionMemory.messages().forEach(message -> {
-                enhancedCode.append("// ").append(message.type()).append(": ").append(message.text()).append("\n");
-            });
-            enhancedCode.append("\n// Follow-up question:\n");
-        } else {
-            logger.warn("Session memory is empty for follow-up request: {}", request.getSessionId());
-        }
-        
-        // Use the code field as the follow-up question
-        enhancedCode.append(request.getCode());
-        
-        String finalPrompt = enhancedCode.toString();
-        
-        // Log the special follow-up prompt
-        logger.info("Follow-up request processed - Session: {}, Memory: {} messages, Question: {}", 
-            request.getSessionId(), sessionMemory.messages().size(), request.getCode());
         
         return new AnalysisRequest(
             finalPrompt,
