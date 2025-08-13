@@ -8,6 +8,7 @@ WORKDIR /app
 COPY pom.xml .
 COPY common/pom.xml common/
 COPY executor/pom.xml executor/
+COPY code-assistant/pom.xml code-assistant/
 COPY document-rag/pom.xml document-rag/
 
 # Download dependencies
