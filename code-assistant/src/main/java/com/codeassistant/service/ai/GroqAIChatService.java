@@ -56,7 +56,7 @@ public class GroqAIChatService implements AIChatService {
             }
             
             // Get Groq model from centralized manager using generic method
-            ChatLanguageModel chatModel = aiServiceManager.getModel(AIServiceConstants.GROQ_SERVICE, request.getApiKey());
+            ChatLanguageModel chatModel = aiServiceManager.getModel(AIServiceConstants.GROQ_SERVICE, null);
             
             // Use the strategy to build messages (maintains Strategy pattern)
             List<ChatMessage> messages = strategy.buildMessages(request).toLangChain4jMessages();
@@ -97,7 +97,7 @@ public class GroqAIChatService implements AIChatService {
             }
             
             // Get Groq streaming model from centralized manager
-            StreamingChatLanguageModel streamingModel = aiServiceManager.getStreamingModel(AIServiceConstants.GROQ_SERVICE, request.getApiKey());
+            StreamingChatLanguageModel streamingModel = aiServiceManager.getStreamingModel(AIServiceConstants.GROQ_SERVICE, null);
             
             // Use the strategy to build messages (maintains Strategy pattern)
             MessagePair messages = strategy.buildMessages(request);

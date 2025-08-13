@@ -29,12 +29,7 @@
         </dependency>
         <dependency>
             <groupId>com.atailabs</groupId>
-            <artifactId>ai-chat</artifactId>
-            <version>1.0.0</version>
-        </dependency>
-        <dependency>
-            <groupId>com.atailabs</groupId>
-            <artifactId>code-generator</artifactId>
+            <artifactId>document-rag</artifactId>
             <version>1.0.0</version>
         </dependency>
 

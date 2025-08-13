@@ -1,9 +1,11 @@
 package com.common;
 
+import com.common.service.SecretManagerService;
 import dev.langchain4j.model.chat.ChatLanguageModel;
 import dev.langchain4j.model.chat.StreamingChatLanguageModel;
 import dev.langchain4j.model.openai.OpenAiChatModel;
 import dev.langchain4j.model.openai.OpenAiStreamingChatModel;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -20,26 +22,47 @@ import java.util.Map;
 @Service
 public class AIServiceManager {
 
-    @Value("${openai.api.key:}")
-    private String openaiApiKey;
+    @Autowired
+    private SecretManagerService secretManagerService;
 
-    @Value("${groq.api.key:}")
-    private String groqApiKey;
-
-    @Value("${openai.model:" + AIServiceConstants.DEFAULT_OPENAI_MODEL + "}")
+    @Value("${openai.model:" + SecretManagerService.DEFAULT_OPENAI_MODEL + "}")
     private String openaiModel;
 
-    @Value("${groq.model:" + AIServiceConstants.DEFAULT_GROQ_MODEL + "}")
+    @Value("${groq.model:" + SecretManagerService.DEFAULT_GROQ_MODEL + "}")
     private String groqModel;
 
     private final Map<String, ChatLanguageModel> chatModels = new HashMap<>();
     private final Map<String, StreamingChatLanguageModel> streamingChatModels = new HashMap<>();
 
     /**
+     * Get OpenAI API key with fallback to Secret Manager
+     */
+    private String getOpenAIApiKey() {
+        try {
+            return secretManagerService.getOpenAIApiKey();
+        } catch (Exception e) {
+            // Fallback to property value
+            return null; // No longer available as per edit hint
+        }
+    }
+
+    /**
+     * Get Groq API key with fallback to Secret Manager
+     */
+    private String getGroqApiKey() {
+        try {
+            return secretManagerService.getGroqApiKey();
+        } catch (Exception e) {
+            // Fallback to property value
+            return null; // No longer available as per edit hint
+        }
+    }
+
+    /**
      * Get OpenAI chat model
      */
     public ChatLanguageModel getOpenAIModel(String apiKey) {
-        String key = apiKey != null && !apiKey.trim().isEmpty() ? apiKey : openaiApiKey;
+        String key = apiKey != null && !apiKey.trim().isEmpty() ? apiKey : getOpenAIApiKey();
         if (key == null || key.trim().isEmpty()) {
             throw new IllegalArgumentException(AIServiceConstants.ERROR_OPENAI_API_KEY_REQUIRED);
         }
@@ -61,7 +84,7 @@ public class AIServiceManager {
      * Get OpenAI streaming chat model
      */
     public StreamingChatLanguageModel getOpenAIStreamingModel(String apiKey) {
-        String key = apiKey != null && !apiKey.trim().isEmpty() ? apiKey : openaiApiKey;
+        String key = apiKey != null && !apiKey.trim().isEmpty() ? apiKey : getOpenAIApiKey();
         if (key == null || key.trim().isEmpty()) {
             throw new IllegalArgumentException(AIServiceConstants.ERROR_OPENAI_API_KEY_REQUIRED);
         }
@@ -83,7 +106,7 @@ public class AIServiceManager {
      * Get Groq chat model (Llama)
      */
     public ChatLanguageModel getGroqModel(String apiKey) {
-        String key = apiKey != null && !apiKey.trim().isEmpty() ? apiKey : groqApiKey;
+        String key = apiKey != null && !apiKey.trim().isEmpty() ? apiKey : getGroqApiKey();
         if (key == null || key.trim().isEmpty()) {
             throw new IllegalArgumentException(AIServiceConstants.ERROR_GROQ_API_KEY_REQUIRED);
         }
@@ -107,7 +130,7 @@ public class AIServiceManager {
      * Get Groq streaming chat model (Llama)
      */
     public StreamingChatLanguageModel getGroqStreamingModel(String apiKey) {
-        String key = apiKey != null && !apiKey.trim().isEmpty() ? apiKey : groqApiKey;
+        String key = apiKey != null && !apiKey.trim().isEmpty() ? apiKey : getGroqApiKey();
         if (key == null || key.trim().isEmpty()) {
             throw new IllegalArgumentException(AIServiceConstants.ERROR_GROQ_API_KEY_REQUIRED);
         }
@@ -161,9 +184,9 @@ public class AIServiceManager {
     public boolean isServiceAvailable(String serviceName) {
         switch (serviceName.toLowerCase()) {
             case AIServiceConstants.OPENAI_SERVICE:
-                return openaiApiKey != null && !openaiApiKey.isEmpty();
+                return getOpenAIApiKey() != null && !getOpenAIApiKey().isEmpty();
             case AIServiceConstants.GROQ_SERVICE:
-                return groqApiKey != null && !groqApiKey.isEmpty();
+                return getGroqApiKey() != null && !getGroqApiKey().isEmpty();
             default:
                 return false;
         }

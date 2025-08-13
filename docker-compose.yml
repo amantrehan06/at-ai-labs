@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  at-ai-labs:
+    build: .
+    container_name: at-ai-labs
+    ports:
+      - "8080:8080"
+    environment:
+      # Required API Keys
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - GROK_API_KEY=${GROK_API_KEY}
+      
+      # Optional Configuration
+      - PORT=8080
+      - OPENAI_MODEL=${OPENAI_MODEL:-gpt-3.5-turbo}
+      - GROQ_MODEL=${GROQ_MODEL:-llama3-8b-8192}
+      
+      # Logging
+      - LOGGING_LEVEL_COM_ATAILABS=INFO
+      - LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_WEB=INFO
+      
+      # Actuator
+      - MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE=health,info
+      - MANAGEMENT_ENDPOINT_HEALTH_SHOW_DETAILS=always
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    volumes:
+      # Optional: Mount logs directory
+      - ./logs:/app/logs
+    networks:
+      - at-ai-labs-network
+
+networks:
+  at-ai-labs-network:
+    driver: bridge 

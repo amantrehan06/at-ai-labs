@@ -199,8 +199,7 @@ public class CodeAnalysisService {
             finalPrompt,
             request.getAnalysisType(),
             request.getLanguage(),
-            request.getSessionId(),
-            request.getApiKey()
+            request.getSessionId()
         );
     }
     
