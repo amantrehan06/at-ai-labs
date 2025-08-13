@@ -1,0 +1,5 @@
+# CODEOWNERS file for at-ai-labs repository
+# This file automatically requests review from the repository owner on all pull requests
+
+# Repository owner - review required for all changes
+* @amantrehan06
