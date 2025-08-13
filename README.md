@@ -107,21 +107,30 @@ at-ai-labs/
 
 ## 📁 Project Structure
 
-### Services
 ```
-services/
-├── code-assistant/              # ✅ Code analysis service
+at-ai-labs/
+├── code-assistant/          # ✅ Code Assistant Service
 │   ├── src/main/java/
-│   │   ├── controller/         # REST controllers
-│   │   ├── service/           # Business logic
-│   │   ├── model/             # Data models
-│   │   └── config/            # Configuration
+│   │   ├── controller/      # REST controllers
+│   │   ├── service/         # Business logic
+│   │   ├── model/           # Data models
+│   │   └── config/          # Configuration
 │   ├── src/main/resources/
-│   │   ├── static/            # Frontend files
+│   │   ├── static/          # Frontend files
 │   │   └── application.properties
-│   ├── Dockerfile             # Container definition
-│   └── deploy.sh             # Deployment script
-└── [future services]          # 🔮 AI Chat, Code Generator, etc.
+│   └── Dockerfile           # Container definition
+├── document-rag/            # 🔮 Document RAG (Coming Soon)
+│   ├── src/main/java/
+│   │   ├── controller/      # REST controllers
+│   │   ├── service/         # Business logic
+│   │   └── model/           # Data models
+│   ├── src/main/resources/
+│   │   └── static/          # Frontend files
+│   └── pom.xml              # Module dependencies
+├── common/                  # 📚 Shared library
+├── executor/                # 🚀 Main application
+├── pom.xml                  # 📦 Main project POM
+└── README.md               # 📖 Project documentation
 ```
 
 ### Shared Components
@@ -159,7 +168,7 @@ shared/
 GET /api/v1/health
 ```
 
-### Code Analysis
+### Code Analysis (Code Assistant Service)
 ```http
 POST /api/v1/code/{type}
 POST /api/v1/code/analyze/{service}
@@ -171,23 +180,40 @@ GET /api/v1/code/services
 GET /api/v1/code/services/stats
 ```
 
+### Document RAG (Document RAG & Flight Deal Bot Service)
+```http
+POST /api/v1/document-rag/query
+POST /api/v1/document-rag/ingest
+DELETE /api/v1/document-rag/clear
+GET /api/v1/document-rag/health
+```
+
+### Flight Deals (Document RAG & Flight Deal Bot Service)
+```http
+POST /api/v1/flight-deals/analyze
+GET /api/v1/flight-deals/trends
+GET /api/v1/flight-deals/airports
+GET /api/v1/flight-deals/health
+```
+
 ## 🚀 Deployment
 
-### Google Cloud Run
-- **Automatic scaling** based on demand
-- **Serverless** - pay only for usage
-- **Global CDN** for fast access
-- **SSL certificates** included
-
-### Environment Variables
+### Local Development
 ```bash
-# Required for AI services
-OPENAI_API_KEY=sk-...
-GROQ_API_KEY=gsk_...
-
-# Optional
-SPRING_PROFILES_ACTIVE=prod
+cd services/code-assistant
+mvn spring-boot:run
 ```
+
+### Cloud Deployment
+1. **Build and deploy using Docker**
+   ```bash
+   docker build -t at-ai-labs .
+   docker run -p 8080:8080 at-ai-labs
+   ```
+
+2. **Access deployed application**
+   - URL will be displayed after deployment
+   - Example: https://your-service-name-xxx-uc.a.run.app
 
 ## 📊 Performance
 

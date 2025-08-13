@@ -64,7 +64,6 @@ public class CodeAssistantController {
             logger.info("Language: {}", request.getLanguage());
             logger.info("Analysis Type: {}", request.getAnalysisType());
             logger.info("Code Length: {}", request.getCode() != null ? request.getCode().length() : 0);
-            logger.info("API Key Present: {}", request.getApiKey() != null && !request.getApiKey().isEmpty());
             
             // Validate session exists
             if (!sessionManager.sessionExists(request.getSessionId())) {

@@ -15,8 +15,7 @@ import org.springframework.context.annotation.ComponentScan;
     "com.executor",
     "com.common",
     "com.codeassistant",
-    "com.aichat",
-    "com.codegenerator"
+    "com.documentrag"
 })
 public class ATAILabsApplication {
 

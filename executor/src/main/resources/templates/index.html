@@ -810,14 +810,6 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="apiKey">🔑 API Key</label>
-                    <input type="password" id="apiKey" placeholder="Enter your OpenAI API key (starts with sk-)">
-                    <small id="apiKeyHelp" style="color: #666; font-size: 12px; margin-top: 5px; display: block;">
-                        Required: OpenAI API key is needed<br>Get it from: https://platform.openai.com/account/api-keys
-                    </small>
-                </div>
-
-                <div class="form-group">
                     <label for="language">💻 Programming Language</label>
                     <select id="language">
                         <option value="java">Java</option>
@@ -1037,13 +1029,17 @@
         // Service selector functionality
         document.querySelectorAll('.service-option').forEach(option => {
             option.addEventListener('click', function() {
-                document.querySelectorAll('.service-option').forEach(opt => opt.classList.remove('selected'));
+                // Remove selection from all options
+                document.querySelectorAll('.service-option').forEach(option => {
+                    option.classList.remove('selected');
+                });
+                
+                // Add selection to clicked option
                 this.classList.add('selected');
                 
                 const selectedService = this.dataset.service;
                 console.log('🎯 Service selected:', selectedService);
                 
-                updateApiKeyHelp(selectedService);
                 updateStreamingToggle(selectedService);
             });
         });
@@ -1071,21 +1067,6 @@
                 }, 2000);
             }
         });
-
-        function updateApiKeyHelp(selectedService) {
-            const apiKeyInput = document.getElementById('apiKey');
-            const apiKeyHelp = document.getElementById('apiKeyHelp');
-            
-            console.log('🔑 Updating API key help for service:', selectedService);
-            
-            if (selectedService === 'OpenAIChatService') {
-                apiKeyInput.placeholder = 'Enter your OpenAI API key (starts with sk-)';
-                apiKeyHelp.innerHTML = 'Required: OpenAI API key is needed<br>Get it from: https://platform.openai.com/account/api-keys';
-            } else if (selectedService === 'GroqAIChatService') {
-                apiKeyInput.placeholder = 'Enter your Groq API key (starts with gsk_)';
-                apiKeyHelp.innerHTML = 'Required: Groq API key is needed<br>Get it from: https://console.groq.com/keys';
-            }
-        }
 
         function updateStreamingToggle(selectedService) {
             const streamingToggle = document.getElementById('streamingToggle');
@@ -1118,7 +1099,6 @@
             const selectedServiceElement = document.querySelector('.service-option.selected');
             const selectedService = selectedServiceElement ? selectedServiceElement.dataset.service : 'OpenAIChatService';
             const isStreaming = document.getElementById('streamingToggle').classList.contains('active');
-            const apiKey = document.getElementById('apiKey').value;
             const language = document.getElementById('language').value;
             
             // Debug: Log the selected service details
@@ -1142,7 +1122,6 @@
                 type: type,
                 selectedService: selectedService,
                 isStreaming: isStreaming,
-                hasApiKey: !!apiKey,
                 language: language,
                 codeLength: code.length,
                 usingFollowUp: !!followUpText
@@ -1150,11 +1129,6 @@
             
             if (!code.trim()) {
                 showResult('❌ Please enter your requirements or specifications', 'error');
-                return;
-            }
-            
-            if (!apiKey.trim()) {
-                showResult('❌ Please enter your API key', 'error');
                 return;
             }
             
@@ -1173,7 +1147,7 @@
                 console.log('⚠️ Streaming requested but not supported for service:', selectedService);
                 showResult('⚠️ Streaming is only supported for OpenAI. Llama/Groq does not support streaming.', 'loading');
                 setTimeout(() => {
-                    analyzeCodeRegular(type, selectedService, apiKey, language, code);
+                    analyzeCodeRegular(type, selectedService, language, code);
                 }, 1000);
                 return;
             }
@@ -1181,15 +1155,15 @@
             if (shouldUseStreaming) {
                 console.log('🔄 Using streaming mode for service:', selectedService);
                 try {
-                    await analyzeCodeStreaming(type, selectedService, apiKey, language, code);
+                    await analyzeCodeStreaming(type, selectedService, language, code);
                 } catch (error) {
                     console.log('❌ Streaming failed, falling back to regular mode:', error);
                     showResult('⚠️ Streaming failed, trying regular mode...', 'loading');
-                    await analyzeCodeRegular(type, selectedService, apiKey, language, code);
+                    await analyzeCodeRegular(type, selectedService, language, code);
                 }
             } else {
                 console.log('📝 Using regular mode for service:', selectedService);
-                await analyzeCodeRegular(type, selectedService, apiKey, language, code);
+                await analyzeCodeRegular(type, selectedService, language, code);
             }
             
             // Clear the follow-up input after processing
@@ -1198,7 +1172,7 @@
             }
         }
         
-        async function analyzeCodeRegular(type, selectedService, apiKey, language, code) {
+        async function analyzeCodeRegular(type, selectedService, language, code) {
             const resultDiv = document.getElementById('result');
             showResult('⏳ Processing request...', 'loading');
             
@@ -1217,7 +1191,6 @@
                 service: selectedService,
                 language: language,
                 codeLength: code.length,
-                hasApiKey: !!apiKey,
                 sessionId: currentSessionId
             });
             
@@ -1231,7 +1204,6 @@
                     analysisType: analysisType,
                     language: language,
                     codeLength: code.length,
-                    hasApiKey: !!apiKey,
                     sessionId: currentSessionId
                 });
                 
@@ -1244,8 +1216,7 @@
                         code: code,
                         language: language,
                         analysisType: analysisType,
-                        sessionId: currentSessionId,
-                        apiKey: apiKey
+                        sessionId: currentSessionId
                     })
                 });
                 
@@ -1282,7 +1253,7 @@
             }
         }
         
-        async function analyzeCodeStreaming(type, selectedService, apiKey, language, code) {
+        async function analyzeCodeStreaming(type, selectedService, language, code) {
             const resultDiv = document.getElementById('result');
             
             // Clear the conversation and add loading message
@@ -1304,7 +1275,6 @@
                 service: selectedService,
                 language: language,
                 codeLength: code.length,
-                hasApiKey: !!apiKey,
                 sessionId: currentSessionId
             });
             
@@ -1324,7 +1294,6 @@
                     analysisType: analysisType,
                     language: language,
                     codeLength: code.length,
-                    hasApiKey: !!apiKey,
                     sessionId: currentSessionId
                 });
                 
@@ -1337,8 +1306,7 @@
                         code: code,
                         language: language,
                         analysisType: analysisType,
-                        sessionId: currentSessionId,
-                        apiKey: apiKey
+                        sessionId: currentSessionId
                     })
                 });
                 
@@ -1636,7 +1604,6 @@
             const selectedServiceElement = document.querySelector('.service-option.selected');
             const selectedService = selectedServiceElement ? selectedServiceElement.dataset.service : 'OpenAIChatService';
             const isStreaming = document.getElementById('streamingToggle').classList.contains('active');
-            const apiKey = document.getElementById('apiKey').value;
             const language = document.getElementById('language').value;
             
             // Debug: Log the selected service details
@@ -1668,22 +1635,22 @@
                 // Use streaming for follow-up
                 console.log('🔄 Using streaming mode for follow-up');
                 try {
-                    await askFollowUpStreaming(selectedService, apiKey, language, followUpText);
+                    await askFollowUpStreaming(selectedService, language, followUpText);
                 } catch (error) {
                     console.log('❌ Streaming follow-up failed, falling back to regular mode:', error);
-                    await askFollowUpRegular(selectedService, apiKey, language, followUpText);
+                    await askFollowUpRegular(selectedService, language, followUpText);
                 }
             } else {
                 // Use regular non-streaming for follow-up
                 console.log('📝 Using regular mode for follow-up');
-                await askFollowUpRegular(selectedService, apiKey, language, followUpText);
+                await askFollowUpRegular(selectedService, language, followUpText);
             }
             
             // Clear the follow-up input after processing
             followUpInput.value = '';
         }
         
-        async function askFollowUpRegular(selectedService, apiKey, language, followUpText) {
+        async function askFollowUpRegular(selectedService, language, followUpText) {
             console.log('📝 Using regular mode for follow-up');
             
             // Show loading message
@@ -1696,8 +1663,7 @@
                 console.log('📋 Follow-up request payload:', {
                     question: followUpText,
                     language: language,
-                    sessionId: currentSessionId,
-                    hasApiKey: !!apiKey
+                    sessionId: currentSessionId
                 });
                 
                 const response = await fetch(url, {
@@ -1709,7 +1675,6 @@
                         code: followUpText, // Use the follow-up text as code
                         language: language,
                         sessionId: currentSessionId,
-                        apiKey: apiKey,
                         analysisType: 'FOLLOWUP' // Use FOLLOWUP analysis type
                     })
                 });
@@ -1757,7 +1722,7 @@
             }
         }
 
-        async function askFollowUpStreaming(selectedService, apiKey, language, followUpText) {
+        async function askFollowUpStreaming(selectedService, language, followUpText) {
             console.log('🔄 Using streaming mode for follow-up');
             
             // Show loading message
@@ -1776,8 +1741,7 @@
                 console.log('📋 Streaming follow-up request payload:', {
                     question: followUpText,
                     language: language,
-                    sessionId: currentSessionId,
-                    hasApiKey: !!apiKey
+                    sessionId: currentSessionId
                 });
                 
                 const response = await fetch(url, {
@@ -1789,7 +1753,6 @@
                         code: followUpText, // Use the follow-up text as code
                         language: language,
                         sessionId: currentSessionId,
-                        apiKey: apiKey,
                         analysisType: 'FOLLOWUP' // Use FOLLOWUP analysis type
                     })
                 });

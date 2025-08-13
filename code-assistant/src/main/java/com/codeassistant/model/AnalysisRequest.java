@@ -30,7 +30,4 @@ public class AnalysisRequest {
     @NotBlank(message = "Session ID cannot be blank")
     @JsonProperty("sessionId")
     private String sessionId;
-    
-    @JsonProperty("apiKey")
-    private String apiKey;
 } 

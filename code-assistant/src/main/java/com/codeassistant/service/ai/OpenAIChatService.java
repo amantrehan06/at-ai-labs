@@ -56,7 +56,7 @@ public class OpenAIChatService implements AIChatService {
             }
             
             // Get OpenAI model from centralized manager using generic method
-            ChatLanguageModel chatModel = aiServiceManager.getModel(AIServiceConstants.OPENAI_SERVICE, request.getApiKey());
+            ChatLanguageModel chatModel = aiServiceManager.getModel(AIServiceConstants.OPENAI_SERVICE, null);
             
             // Use the strategy to build messages (maintains Strategy pattern)
             List<ChatMessage> messages = strategy.buildMessages(request).toLangChain4jMessages();
@@ -97,7 +97,7 @@ public class OpenAIChatService implements AIChatService {
             }
             
             // Get OpenAI streaming model from centralized manager
-            StreamingChatLanguageModel streamingModel = aiServiceManager.getStreamingModel(AIServiceConstants.OPENAI_SERVICE, request.getApiKey());
+            StreamingChatLanguageModel streamingModel = aiServiceManager.getStreamingModel(AIServiceConstants.OPENAI_SERVICE, null);
             
             // Use the strategy to build messages (maintains Strategy pattern)
             List<ChatMessage> messages = strategy.buildMessages(request).toLangChain4jMessages();
