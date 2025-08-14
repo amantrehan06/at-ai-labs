@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Repository PDF Generator Test - AT AI Labs</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-size: 16px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            padding: 20px 0;
+            color: white;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            margin-bottom: 20px;
+        }
+        
+        .back-button {
+            display: inline-block;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: bold;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+        
+        .back-button:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+        }
+        
+        .test-section {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin: 20px 0;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+        }
+        
+        .test-section h2 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.5rem;
+        }
+        
+        .test-button {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin: 10px 5px;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .test-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(40, 167, 69, 0.4);
+        }
+        
+        .test-button.secondary {
+            background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+        }
+        
+        .test-button.secondary:hover {
+            box-shadow: 0 5px 15px rgba(108, 117, 125, 0.4);
+        }
+        
+        .info-box {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+        }
+        
+        .status {
+            padding: 10px;
+            border-radius: 6px;
+            margin: 10px 0;
+            font-weight: 600;
+        }
+        
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        
+        .endpoint-list {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .endpoint-list li {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            padding: 12px;
+            margin: 8px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+        }
+        
+        .endpoint-list .method {
+            color: #28a745;
+            font-weight: bold;
+        }
+        
+        .endpoint-list .url {
+            color: #007bff;
+        }
+        
+        .endpoint-list .description {
+            color: #6c757d;
+            font-style: italic;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔍 Repository PDF Generator Test</h1>
+            <p>Test the PDF generation functionality for Java repositories</p>
+            <a href="/" class="back-button">← Back to Services</a>
+        </div>
+        
+        <div class="test-section">
+            <h2>📊 Repository Information</h2>
+            <p>Get information about the current repository before generating PDFs.</p>
+            <button class="test-button secondary" onclick="getRepoInfo()">📋 Get Repository Info</button>
+            <div id="repoInfo" class="info-box" style="display: none;"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>📄 Generate PDF from Current Repository</h2>
+            <p>Generate a PDF from the current working directory (at-ai-labs project).</p>
+            <button class="test-button" onclick="generateCurrentRepoPdf()">🚀 Generate Current Repo PDF</button>
+            <div id="currentRepoStatus"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>🔍 Generate PDF from Specific Repository</h2>
+            <p>Generate a PDF from a repository found in common locations.</p>
+            <input type="text" id="repoNameInput" placeholder="Enter repository name (e.g., my-project)" 
+                   style="padding: 10px; border: 2px solid #dee2e6; border-radius: 6px; margin-right: 10px; width: 250px;">
+            <button class="test-button" onclick="generateSpecificRepoPdf()">🔍 Generate Specific Repo PDF</button>
+            <div id="specificRepoStatus"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>📚 Available Endpoints</h2>
+            <ul class="endpoint-list">
+                <li>
+                    <span class="method">GET</span> <span class="url">/api/v1/repo-pdf/health</span>
+                    <div class="description">Service health check and endpoint information</div>
+                </li>
+                <li>
+                    <span class="method">GET</span> <span class="url">/api/v1/repo-pdf/info</span>
+                    <div class="description">Get information about the current repository</div>
+                </li>
+                <li>
+                    <span class="method">GET</span> <span class="url">/api/v1/repo-pdf/generate</span>
+                    <div class="description">Generate PDF from current repository (downloads automatically)</div>
+                </li>
+                <li>
+                    <span class="method">GET</span> <span class="url">/api/v1/repo-pdf/generate/{repoName}</span>
+                    <div class="description">Generate PDF from specific repository by name</div>
+                </li>
+                <li>
+                    <span class="method">POST</span> <span class="url">/api/v1/repo-pdf/generate-custom</span>
+                    <div class="description">Generate PDF from custom repository path (JSON body with repoPath)</div>
+                </li>
+            </ul>
+        </div>
+        
+        <div class="test-section">
+            <h2>💡 How It Works</h2>
+            <div class="info-box">
+                <strong>1. File Scanning:</strong> Recursively scans the repository for .java files<br>
+                <strong>2. Content Extraction:</strong> Extracts package names, class names, and file content<br>
+                <strong>3. PDF Generation:</strong> Creates a structured PDF with code analysis<br>
+                <strong>4. Download:</strong> Automatically downloads the generated PDF file<br>
+                <br>
+                <strong>Supported:</strong> Java classes, interfaces, enums<br>
+                <strong>Ignored:</strong> target/, build/, .git/, .idea/, and other build directories<br>
+                <strong>Content Limit:</strong> First 100 lines per file to keep PDF manageable
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '/api/v1/repo-pdf';
+        
+        async function getRepoInfo() {
+            try {
+                const response = await fetch(`${API_BASE}/info`);
+                const data = await response.json();
+                
+                const infoBox = document.getElementById('repoInfo');
+                infoBox.innerHTML = `
+                    <strong>Repository:</strong> ${data.currentRepository}<br>
+                    <strong>Full Path:</strong> ${data.fullPath}<br>
+                    <strong>Java Files:</strong> ${data.javaFileCount}<br>
+                    <strong>Exists:</strong> ${data.exists}<br>
+                    <strong>Is Directory:</strong> ${data.isDirectory}<br>
+                    <strong>Can Read:</strong> ${data.canRead}<br>
+                    <strong>Timestamp:</strong> ${data.timestamp}
+                `;
+                infoBox.style.display = 'block';
+                
+            } catch (error) {
+                console.error('Error getting repo info:', error);
+                showStatus('repoInfo', 'Error getting repository information: ' + error.message, 'error');
+            }
+        }
+        
+        async function generateCurrentRepoPdf() {
+            showStatus('currentRepoStatus', 'Generating PDF from current repository...', 'info');
+            
+            try {
+                // Create a temporary link to trigger download
+                const link = document.createElement('a');
+                link.href = `${API_BASE}/generate`;
+                link.download = 'at-ai-labs-repo.pdf';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                showStatus('currentRepoStatus', '✅ PDF generation started! Check your downloads folder.', 'success');
+                
+            } catch (error) {
+                console.error('Error generating PDF:', error);
+                showStatus('currentRepoStatus', '❌ Error generating PDF: ' + error.message, 'error');
+            }
+        }
+        
+        async function generateSpecificRepoPdf() {
+            const repoName = document.getElementById('repoNameInput').value.trim();
+            if (!repoName) {
+                showStatus('specificRepoStatus', '❌ Please enter a repository name', 'error');
+                return;
+            }
+            
+            showStatus('specificRepoStatus', `Generating PDF from repository: ${repoName}...`, 'info');
+            
+            try {
+                // Create a temporary link to trigger download
+                const link = document.createElement('a');
+                link.href = `${API_BASE}/generate/${encodeURIComponent(repoName)}`;
+                link.download = `${repoName}.pdf`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                showStatus('specificRepoStatus', `✅ PDF generation started for ${repoName}! Check your downloads folder.`, 'success');
+                
+            } catch (error) {
+                console.error('Error generating PDF:', error);
+                showStatus('specificRepoStatus', '❌ Error generating PDF: ' + error.message, 'error');
+            }
+        }
+        
+        function showStatus(elementId, message, type) {
+            const element = document.getElementById(elementId);
+            element.innerHTML = `<div class="status ${type}">${message}</div>`;
+        }
+        
+        // Initialize page
+        window.onload = function() {
+            console.log('🚀 Repository PDF Generator Test Page loaded');
+        };
+    </script>
+</body>
+</html> 

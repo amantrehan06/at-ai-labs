@@ -1,7 +1,7 @@
 package com.codeassistant.controller;
 
 import com.codeassistant.service.CodeAnalysisService;
-import com.codeassistant.service.SessionManager;
+import com.common.service.SessionManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

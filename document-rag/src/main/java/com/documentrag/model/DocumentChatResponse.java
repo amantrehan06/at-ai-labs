@@ -15,6 +15,7 @@ public class DocumentChatResponse {
     private boolean success;
     private String message;
     private String answer;
+    private String response; // Alias for answer to match UI expectations
     private String sessionId;
     private List<String> relevantDocuments;
     private List<String> sources;

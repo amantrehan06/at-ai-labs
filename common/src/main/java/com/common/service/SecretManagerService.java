@@ -16,6 +16,7 @@ public class SecretManagerService {
     // API Key Constants
     public static final String OPENAI_API_KEY_NAME = "OPENAI_API_KEY";
     public static final String GROK_API_KEY_NAME = "GROK_API_KEY";
+    public static final String PINECONE_API_KEY_NAME = "PINECONE_API_KEY";
     
     // Model Constants
     public static final String OPENAI_MODEL_GPT_3_5_TURBO = "gpt-3.5-turbo";
@@ -74,6 +75,32 @@ public class SecretManagerService {
         if (key == null || key.trim().isEmpty()) {
             logger.error("Groq API key not found in system properties or environment variables");
             throw new RuntimeException(GROK_API_KEY_NAME + " is required. Set as VM option (-D" + GROK_API_KEY_NAME + "=...) or environment variable");
+        }
+        
+        return key;
+    }
+    
+    /**
+     * Get Pinecone API key from system property or environment variable
+     * Priority: System Property (VM options) > Environment Variable
+     */
+    public String getPineconeApiKey() {
+        // First try system property (for local VM options)
+        String key = System.getProperty(PINECONE_API_KEY_NAME);
+        
+        // Fall back to environment variable (for Cloud Run)
+        if (key == null || key.trim().isEmpty()) {
+            key = System.getenv(PINECONE_API_KEY_NAME);
+            if (key != null && !key.trim().isEmpty()) {
+                logger.info("Retrieved Pinecone API key from environment variable");
+            }
+        } else {
+            logger.info("Retrieved Pinecone API key from system property (VM option)");
+        }
+        
+        if (key == null || key.trim().isEmpty()) {
+            logger.error("Pinecone API key not found in system properties or environment variables");
+            throw new RuntimeException(PINECONE_API_KEY_NAME + " is required. Set as VM option (-D" + PINECONE_API_KEY_NAME + "=...) or environment variable");
         }
         
         return key;

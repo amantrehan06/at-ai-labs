@@ -11,6 +11,7 @@ public class DocumentChatRequest {
     
     private String message;
     private String sessionId;
+    private String service; // AI service to use (OpenAIChatService, GroqAIChatService)
     private List<ChatMessage> conversationHistory;
     
     @Data

@@ -4,37 +4,32 @@ import com.documentrag.model.DocumentUploadResponse;
 import dev.langchain4j.data.document.Document;
 import dev.langchain4j.data.document.DocumentSplitter;
 import dev.langchain4j.data.document.splitter.DocumentSplitters;
-import dev.langchain4j.data.embedding.Embedding;
 import dev.langchain4j.data.segment.TextSegment;
-import dev.langchain4j.model.embedding.EmbeddingModel;
-import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.text.PDFTextStripper;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
+@Slf4j
 @Service
 public class DocumentProcessingService {
-    
-    @Autowired
-    private EmbeddingModel embeddingModel;
     
     @Autowired
     private DocumentChatService documentChatService;
     
     // In-memory document store
     private final ConcurrentHashMap<String, DocumentInfo> documentStore = new ConcurrentHashMap<>();
-    private final DocumentSplitter documentSplitter = DocumentSplitters.recursive(100, 20);
+    private final DocumentSplitter documentSplitter = DocumentSplitters.recursive(800, 100);
     
-    public DocumentUploadResponse processPdfDocument(MultipartFile file, String documentType, String description) {
+    public DocumentUploadResponse processPdfDocument(MultipartFile file, String sessionId) {
         DocumentUploadResponse response = new DocumentUploadResponse();
         
         try {
@@ -45,67 +40,80 @@ public class DocumentProcessingService {
                 return response;
             }
             
-            // Extract text from PDF
-            String pdfText = extractTextFromPdf(file.getInputStream());
-            
-            if (pdfText == null || pdfText.trim().isEmpty()) {
-                response.setSuccess(false);
-                response.setMessage("Could not extract text from PDF. The file might be corrupted or password protected.");
-                return response;
-            }
-            
             // Generate document ID
             String documentId = UUID.randomUUID().toString();
             
-            // Create document with metadata
-            Document document = Document.from(pdfText, dev.langchain4j.data.document.Metadata.from("type", documentType));
+            // Get file details
+            String fileName = file.getOriginalFilename();
+            
+            // Extract text from PDF
+            String extractedText = extractTextFromPdf(file);
+            if (extractedText == null || extractedText.trim().isEmpty()) {
+                response.setSuccess(false);
+                response.setMessage("Could not extract text from PDF. The document may be empty or contain only images.");
+                return response;
+            }
+            
+            // Create document with comprehensive metadata including sessionId for hybrid search
+            dev.langchain4j.data.document.Metadata metadata = dev.langchain4j.data.document.Metadata.from("type", "pdf");
+            metadata.add("documentId", documentId);
+            metadata.add("sessionId", sessionId); // Add sessionId for hybrid search
+            metadata.add("fileName", fileName);
+            metadata.add("fileSize", String.valueOf(file.getSize()));
+            metadata.add("uploadedAt", String.valueOf(System.currentTimeMillis()));
+            metadata.add("contentType", "pdf");
+            metadata.add("source", "upload");
+            
+            Document document = Document.from(extractedText, metadata);
             
             // Split document into segments
             List<TextSegment> segments = documentSplitter.split(document);
             
             // Add document to vector store for chat functionality
-            documentChatService.addDocumentToVectorStore(documentId, pdfText, documentType);
+            documentChatService.addDocumentToVectorStore(documentId, segments, "pdf");
             
             // Store document info
             DocumentInfo docInfo = new DocumentInfo(
                 documentId,
-                file.getOriginalFilename(),
-                documentType,
-                description,
+                fileName,
+                "pdf",
+                "PDF document",
                 file.getSize(),
                 segments.size(),
                 segments.size(), // All segments processed
-                pdfText
+                extractedText
             );
             documentStore.put(documentId, docInfo);
             
             // Build response
             response.setSuccess(true);
-            response.setMessage("Document uploaded and processed successfully. You can now ask questions about this document!");
+            response.setMessage("PDF document uploaded successfully! You can now ask questions about your document.");
             response.setDocumentId(documentId);
-            response.setFileName(file.getOriginalFilename());
-            response.setDocumentType(documentType);
+            response.setFileName(fileName);
+            response.setDocumentType("pdf");
             response.setFileSize(file.getSize());
             response.setSegmentsProcessed(segments.size());
             
             // Add metadata
-            Map<String, Object> metadata = new HashMap<>();
-            metadata.put("totalSegments", segments.size());
-            metadata.put("processedSegments", segments.size());
-            metadata.put("documentType", documentType);
-            metadata.put("description", description);
-            metadata.put("vectorStore", "Chroma");
-            response.setMetadata(metadata);
+            Map<String, Object> metadataMap = new HashMap<>();
+            metadataMap.put("totalSegments", segments.size());
+            metadataMap.put("processedSegments", segments.size());
+            metadataMap.put("documentType", "pdf");
+            metadataMap.put("description", "PDF document");
+            metadataMap.put("vectorStore", "Pinecone");
+            metadataMap.put("textLength", extractedText.length());
+            metadataMap.put("averageSegmentLength", segments.isEmpty() ? 0 : extractedText.length() / segments.size());
+            metadataMap.put("sessionId", sessionId); // Include sessionId in response metadata
+            response.setMetadata(metadataMap);
             
-            // Log successful document processing
-            // System.out.println("Document processed: " + documentId + " (" + file.getOriginalFilename() + 
-            //                  ", segments: " + segments.size() + ", added to vector store)");
+            // Log successful PDF processing
+            log.info("PDF document processed successfully - ID: {}, Session: {}, Name: {}, Text Length: {}, Segments: {}", 
+                    documentId, sessionId, fileName, extractedText.length(), segments.size());
             
         } catch (Exception e) {
+            log.error("Error processing PDF document: {}", e.getMessage(), e);
             response.setSuccess(false);
-            response.setMessage("Error processing document: " + e.getMessage());
-            // Log error processing PDF
-            // System.err.println("Error processing PDF: " + e.getMessage());
+            response.setMessage("Error processing PDF document: " + e.getMessage());
         }
         
         return response;
@@ -117,34 +125,15 @@ public class DocumentProcessingService {
                file.getContentType() != null && 
                file.getContentType().equals("application/pdf") &&
                file.getSize() > 0 && 
-               file.getSize() <= 10 * 1024 * 1024; // 10MB limit
+               file.getSize() <= 50 * 1024 * 1024; // 50MB limit for PDF files
     }
     
-    private String extractTextFromPdf(InputStream inputStream) throws IOException {
-        try (PDDocument document = PDDocument.load(inputStream)) {
-            if (document.isEncrypted()) {
-                throw new IOException("PDF is encrypted and cannot be processed");
-            }
-            
-            PDFTextStripper stripper = new PDFTextStripper();
+    private String extractTextFromPdf(MultipartFile file) throws IOException {
+        try (org.apache.pdfbox.pdmodel.PDDocument document = org.apache.pdfbox.pdmodel.PDDocument.load(file.getInputStream())) {
+            org.apache.pdfbox.text.PDFTextStripper stripper = new org.apache.pdfbox.text.PDFTextStripper();
+            stripper.setSortByPosition(true);
             return stripper.getText(document);
         }
-    }
-    
-    public DocumentInfo getDocumentInfo(String documentId) {
-        return documentStore.get(documentId);
-    }
-    
-    public List<DocumentInfo> getAllDocuments() {
-        return documentStore.values().stream().toList();
-    }
-    
-    public void deleteDocument(String documentId) {
-        documentStore.remove(documentId);
-    }
-    
-    public void clearAllDocuments() {
-        documentStore.clear();
     }
     
     // Inner class to store document information
