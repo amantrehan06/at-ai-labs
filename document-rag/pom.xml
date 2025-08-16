@@ -22,76 +22,80 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
-
-        <!-- Spring Boot Starter Thymeleaf -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-thymeleaf</artifactId>
-        </dependency>
-
+        
         <!-- Spring Boot Starter Validation -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
-
+        
         <!-- LangChain4j Core -->
         <dependency>
             <groupId>dev.langchain4j</groupId>
             <artifactId>langchain4j</artifactId>
+            <version>0.27.1</version>
         </dependency>
-
+        
         <!-- LangChain4j OpenAI -->
         <dependency>
             <groupId>dev.langchain4j</groupId>
             <artifactId>langchain4j-open-ai</artifactId>
+            <version>0.27.1</version>
         </dependency>
-
-        <!-- LangChain4j Vector Store - Use embeddings module -->
+        
+        <!-- LangChain4j Embeddings -->
         <dependency>
             <groupId>dev.langchain4j</groupId>
             <artifactId>langchain4j-embeddings</artifactId>
+            <version>0.27.1</version>
         </dependency>
-
-        <!-- LangChain4j Chroma Vector Store -->
+        
+        <!-- LangChain4j Pinecone -->
         <dependency>
             <groupId>dev.langchain4j</groupId>
             <artifactId>langchain4j-pinecone</artifactId>
+            <version>0.27.1</version>
         </dependency>
-
-        <!-- Lombok -->
+        
+        <!-- JavaParser for Java code analysis -->
         <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <optional>true</optional>
+            <groupId>com.github.javaparser</groupId>
+            <artifactId>javaparser-core</artifactId>
+            <version>3.25.5</version>
         </dependency>
-
-        <!-- Spring Boot Starter Test -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-test</artifactId>
-            <scope>test</scope>
-        </dependency>
-
+        
         <!-- Common Module -->
         <dependency>
             <groupId>com.atailabs</groupId>
             <artifactId>common</artifactId>
             <version>1.0.0</version>
         </dependency>
-
+        
         <!-- OkHttp for HTTP requests -->
         <dependency>
             <groupId>com.squareup.okhttp3</groupId>
             <artifactId>okhttp</artifactId>
             <version>4.12.0</version>
         </dependency>
-
-        <!-- PDFBox for PDF text extraction -->
+        
+        <!-- Jackson for JSON processing -->
         <dependency>
-            <groupId>org.apache.pdfbox</groupId>
-            <artifactId>pdfbox</artifactId>
-            <version>2.0.29</version>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+        </dependency>
+        
+        <!-- Lombok -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <optional>true</optional>
+        </dependency>
+        
+        <!-- Spring Boot Starter Test -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 

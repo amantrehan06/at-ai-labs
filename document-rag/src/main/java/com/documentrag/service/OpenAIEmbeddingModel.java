@@ -21,6 +21,9 @@ import java.util.stream.Collectors;
 @Service
 public class OpenAIEmbeddingModel implements EmbeddingModel {
 
+    // Record for OpenAI embedding request
+    public record OpenAIEmbeddingRequest(String model, List<String> input) {}
+
     private static final String OPENAI_EMBEDDINGS_URL = "https://api.openai.com/v1/embeddings";
     private final String apiKey;
     private final String model;
@@ -62,10 +65,7 @@ public class OpenAIEmbeddingModel implements EmbeddingModel {
             // Build JSON request
             List<String> inputs = segments.stream().map(TextSegment::text).collect(Collectors.toList());
             String json = objectMapper.writeValueAsString(
-                    new Object() {
-                        public final String model = OpenAIEmbeddingModel.this.model;
-                        public final List<String> input = inputs;
-                    }
+                    new OpenAIEmbeddingRequest(OpenAIEmbeddingModel.this.model, inputs)
             );
 
             RequestBody body = RequestBody.create(

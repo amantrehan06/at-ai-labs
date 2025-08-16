@@ -18,32 +18,23 @@ import java.util.*;
 public class PineconeEmbeddingStore implements EmbeddingStore<TextSegment> {
 
     // Pinecone Request DTOs
-    @lombok.Data
-    @lombok.AllArgsConstructor
-    @lombok.NoArgsConstructor
-    public static class PineconeQueryRequest {
-        private List<Float> vector;
-        private int topK;
-        private boolean includeMetadata;
-        private boolean includeValues;
-        private Map<String, Object> filter; // Use Map instead of string
-    }
+    public record PineconeQueryRequest(
+        List<Float> vector,
+        int topK,
+        boolean includeMetadata,
+        boolean includeValues,
+        Map<String, Object> filter
+    ) {}
 
-    @lombok.Data
-    @lombok.AllArgsConstructor
-    @lombok.NoArgsConstructor
-    public static class PineconeUpsertRequest {
-        private List<PineconeVector> vectors;
-    }
+    public record PineconeUpsertRequest(
+        List<PineconeVector> vectors
+    ) {}
 
-    @lombok.Data
-    @lombok.AllArgsConstructor
-    @lombok.NoArgsConstructor
-    public static class PineconeVector {
-        private String id;
-        private List<Float> values;
-        private Map<String, Object> metadata;
-    }
+    public record PineconeVector(
+        String id,
+        List<Float> values,
+        Map<String, Object> metadata
+    ) {}
 
     private final String apiKey;
     private final String environment;
@@ -245,14 +236,11 @@ public class PineconeEmbeddingStore implements EmbeddingStore<TextSegment> {
                             textSegment = TextSegment.from(metadata.get("text").asText(), reconstructedMetadata);
                         }
 
-                        // Create a mock embedding for the result (since we don't store the actual vectors)
-                        List<Float> mockVector = new ArrayList<>();
-                        for (int i = 0; i < queryVector.size(); i++) {
-                            mockVector.add(0.0f);
-                        }
-                        Embedding mockEmbedding = Embedding.from(mockVector);
+                        // Create minimal embedding object (only size matters, values are irrelevant)
+                        // We only need this because EmbeddingMatch interface requires it
+                        Embedding minimalEmbedding = Embedding.from(Collections.nCopies(queryVector.size(), 0.0f));
 
-                        results.add(new dev.langchain4j.store.embedding.EmbeddingMatch<TextSegment>(score, matchId, mockEmbedding, textSegment));
+                        results.add(new dev.langchain4j.store.embedding.EmbeddingMatch<TextSegment>(score, matchId, minimalEmbedding, textSegment));
                     }
                 }
 

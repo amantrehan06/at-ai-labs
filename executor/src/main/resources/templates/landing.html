@@ -126,17 +126,6 @@
             box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
         }
 
-        .coming-soon {
-            background: #f8f9fa;
-            border: 2px dashed #dee2e6;
-            opacity: 0.7;
-        }
-
-        .coming-soon .service-button {
-            background: #6c757d;
-            cursor: not-allowed;
-        }
-
         .footer {
             text-align: center;
             padding: 40px 0;
@@ -205,54 +194,32 @@
                     <li>Advanced code analysis and refactoring</li>
                     <li>Session management with conversation history</li>
                     <li>Markdown formatting with syntax highlighting</li>
-                    <li>Support for 14+ programming languages</li>
                     <li>Multiple AI providers (OpenAI GPT, Llama)</li>
-                    <li>Context-aware RAG layer (coming soon)</li>
                     <li>LangChain4j agent support with tools (coming soon)</li>
                 </ul>
                 <a href="/code-assistant" class="service-button">Try Code Assistant</a>
             </div>
 
             <!-- Document RAG Service -->
-            <div class="service-card coming-soon">
+            <div class="service-card">
                 <span class="service-icon">📄</span>
                 <h2 class="service-title">Document RAG</h2>
                 <p class="service-description">
-                    Upload documents (PDF, text) and ask questions using RAG. 
-                    Get intelligent answers from your documents with vector search and chat memory.
+                    Upload Java source code (.java files) and ask questions using RAG.
+                    Get intelligent answers from your file with vector search and chat memory.
                 </p>
                 <ul class="service-features">
-                    <li>File upload UI for PDF and text documents</li>
-                    <li>LangChain4j file loaders and chunking</li>
-                    <li>Vector DB storage with embeddings</li>
-                    <li>Semantic search and retrieval</li>
-                    <li>Multi-turn chat history</li>
-                    <li>Support for multiple documents per session</li>
-                    <li>Hybrid prompting with context chunks</li>
+                    <li>Upload & parse Java code with AST analysis</li>
+                    <li>Intelligent semantic chunking with metadata</li>
+                    <li>Vector embeddings + hybrid search with filters</li>
+                    <li>Embedding-based intent detection for methods, classes, fields, and more</li>
+                    <li>Session-aware, multi-turn AI chat with context memory</li>
+                    <li>Rich, syntax-highlighted AI responses</li>
+                    <li>LLM-powered insights for deep code understanding</li>
                 </ul>
-                <a href="/document-rag" class="service-button">Test Document RAG</a>
-                <a href="/repo-pdf-test" class="service-button" style="margin-top: 10px; background: #6c757d;">🔍 Test PDF Generator</a>
+                <a href="/document-rag" class="service-button">TRY Document RAG</a>
             </div>
 
-            <!-- Documentation Generator (Coming Soon) -->
-            <div class="service-card coming-soon">
-                <span class="service-icon">🛫</span>
-                <h2 class="service-title">Flight Deal Bot</h2>
-                <p class="service-description">
-                    Smart assistant that helps users find best flight deals using LLM and RAG. 
-                    Get intelligent flight recommendations with price analysis and trends using mock data.
-                </p>
-                <ul class="service-features">
-                    <li>Mock flight data with realistic city pairs and prices</li>
-                    <li>RAG-powered deal search and recommendations</li>
-                    <li>Price analysis and trend detection</li>
-                    <li>Advanced filtering (budget, dates, airlines)</li>
-                    <li>LLM-powered deal ranking and summarization</li>
-                    <li>Chat interface with session memory</li>
-                    <li>Weather and visa requirement tools (optional)</li>
-                </ul>
-                <a href="#" class="service-button">Coming Soon</a>
-            </div>
         </div>
 
         <div class="tech-stack">

@@ -21,9 +21,4 @@ public class DocumentUploadResponse {
     private int segmentsProcessed;
     private LocalDateTime uploadedAt = LocalDateTime.now();
     private Map<String, Object> metadata;
-    
-    public DocumentUploadResponse(boolean success, String message) {
-        this.success = success;
-        this.message = message;
-    }
 } 

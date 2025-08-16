@@ -3,10 +3,12 @@ package com.documentrag.model;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
 import org.springframework.web.multipart.MultipartFile;
 
 @Data
 @NoArgsConstructor
+@AllArgsConstructor
 public class DocumentUploadRequest {
     
     @NotNull(message = "Document file is required")
@@ -14,16 +16,6 @@ public class DocumentUploadRequest {
     
     private String documentType = "general";
     private String description;
-    
-    public DocumentUploadRequest(MultipartFile file) {
-        this.file = file;
-    }
-    
-    public DocumentUploadRequest(MultipartFile file, String documentType, String description) {
-        this.file = file;
-        this.documentType = documentType;
-        this.description = description;
-    }
     
     // Validation methods
     public boolean isValidPdf() {

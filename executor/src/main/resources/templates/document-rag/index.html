@@ -188,6 +188,42 @@
             background: linear-gradient(90deg, #667eea, #764ba2);
         }
 
+        .input-section.disabled {
+            opacity: 0.6;
+            background: #f8f9fa;
+            border: 2px solid #dee2e6;
+        }
+
+        .input-section.disabled .form-group {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        .input-section.disabled label {
+            color: #999;
+        }
+
+        .input-section.disabled select,
+        .input-section.disabled input,
+        .input-section.disabled textarea {
+            background: #f5f5f5;
+            color: #999;
+            cursor: not-allowed;
+        }
+
+        .input-section.disabled .service-selector {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        .input-section.disabled .upload-btn,
+        .input-section.disabled .submit-btn {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
         .output-section {
             background: white;
             border-radius: 12px;
@@ -197,6 +233,9 @@
             display: flex;
             flex-direction: column;
             min-height: 500px;
+            /* Ensure it doesn't expand beyond its grid column */
+            max-width: 100%;
+            overflow: hidden;
         }
 
         .output-section::before {
@@ -371,6 +410,9 @@
             display: none;
             flex-direction: column;
             height: 100%;
+            /* Ensure chat stays within its grid column */
+            max-width: 100%;
+            overflow: hidden;
         }
 
         .chat-interface.active {
@@ -400,12 +442,27 @@
             font-size: 0.9rem;
         }
 
+        .chat-debug {
+            background: #f8f9fa;
+            border-top: 1px solid #e1e5e9;
+            padding: 8px 15px;
+            font-size: 0.8rem;
+            color: #666;
+            text-align: center;
+        }
+
+        .chat-debug small {
+            font-family: 'Courier New', monospace;
+        }
+
         .chat-messages {
             flex-grow: 1;
-            overflow-y: auto;
+            overflow-y: visible; /* Changed from auto to visible to allow expansion */
             padding: 0 5px;
             margin-bottom: 20px;
-            max-height: 300px;
+            /* Ensure messages don't overflow the container */
+            max-width: 100%;
+            word-wrap: break-word;
         }
 
         .chat-input-area {
@@ -511,6 +568,84 @@
             text-align: left;
         }
 
+        /* Enhanced message content formatting */
+        .message-content h1, .message-content h2, .message-content h3 {
+            margin: 10px 0 8px 0;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .message-content h1 {
+            font-size: 1.4rem;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 5px;
+        }
+
+        .message-content h2 {
+            font-size: 1.2rem;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 3px;
+        }
+
+        .message-content h3 {
+            font-size: 1.1rem;
+            color: #555;
+        }
+
+        .message-content ul, .message-content ol {
+            margin: 8px 0;
+            padding-left: 25px;
+        }
+
+        .message-content li {
+            margin: 4px 0;
+            line-height: 1.5;
+        }
+
+        .message-content strong {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .message-content em {
+            font-style: italic;
+            color: #555;
+        }
+
+        .message-content .inline-code {
+            background: #f1f3f4;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            color: #d73a49;
+            border: 1px solid #e1e4e8;
+        }
+
+        /* Syntax highlighting overrides */
+        .message-content pre {
+            background: #f6f8fa;
+            border: 1px solid #e1e4e8;
+            border-radius: 6px;
+            padding: 16px;
+            margin: 16px 0;
+            overflow-x: auto;
+        }
+
+        .message-content pre code {
+            background: transparent;
+            padding: 0;
+            border: none;
+            font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+            font-size: 13px;
+            line-height: 1.45;
+        }
+
+        .message-content .hljs {
+            background: transparent;
+            padding: 0;
+        }
+
         .typing-indicator {
             display: none;
             align-items: center;
@@ -546,24 +681,6 @@
         @keyframes typing {
             0%, 80%, 100% { transform: scale(0.8); opacity: 0.5; }
             40% { transform: scale(1); opacity: 1; }
-        }
-
-        .upload-new-btn {
-            background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            margin-top: 15px;
-            width: 100%;
-        }
-
-        .upload-new-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(108, 117, 125, 0.4);
         }
 
         .service-selector {
@@ -655,12 +772,16 @@
             }
         }
     </style>
+    
+    <!-- Add highlight.js for syntax highlighting -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>📄 Document RAG</h1>
-            <p>Upload your PDF documents and chat with your content using AI</p>
+            <h1>☕ Java Code RAG</h1>
+            <p>Upload your Java source files and chat with your code using AI</p>
             <a href="/" class="back-button">← Back to Services</a>
         </div>
         
@@ -713,9 +834,9 @@
                 <h2 class="section-title">📤 Document Upload</h2>
                 
                 <div class="upload-section" id="uploadSection">
-                    <h3>📁 Upload PDF Document</h3>
-                    <p>Drag and drop your PDF document here or click to browse</p>
-                    <p class="upload-hint">💡 <strong>Tip:</strong> Upload your PDF document, then chat with it.</p>
+                    <h3>📁 Upload Java Source File</h3>
+                    <p>Drag and drop your Java source file here or click to browse</p>
+                    <p class="upload-hint">💡 <strong>Tip:</strong> Upload your Java source file, then chat with it.</p>
                 
                     <div class="form-group">
                         <label>🤖 AI Service</label>
@@ -731,16 +852,16 @@
                         </div>
                     </div>
                 
-                    <input type="file" id="fileInput" class="file-input" accept=".pdf" />
+                    <input type="file" id="fileInput" class="file-input" accept=".java" />
                     <button class="upload-btn" onclick="document.getElementById('fileInput').click()">
-                        📁 Choose PDF Document
+                        📁 Choose Java File
                     </button>
                     
                     <div class="file-info" id="fileInfo" style="display: none;">
-                        <strong>Document:</strong> <span id="docName"></span><br>
-                        <strong>Pages:</strong> <span id="pageCount"></span><br>
-                        <strong>Total Size:</strong> <span id="totalSize"></span>
-                    </div>
+                        <strong>Class:</strong> <span id="docName"></span><br>
+                        <strong>Type:</strong> <span id="pageCount"></span><br>
+                        <strong>File Size:</strong> <span id="totalSize"></span>
+                </div>
                 
                     <button class="submit-btn" id="submitBtn" onclick="uploadDocument()" disabled>
                         🚀 Process Document & Start Chatting
@@ -755,19 +876,22 @@
             </div>
 
             <div class="output-section">
-                <h2 class="section-title">💬 Chat with Your Document</h2>
-                
                 <!-- Initial state -->
                 <div id="initialState" class="result-content">
-                    Upload a PDF document to get started...
+                    Upload a Java source file to get started...
                 </div>
 
                 <!-- Chat Interface (initially hidden) -->
                 <div class="chat-interface" id="chatInterface" style="display: none;">
+                    <div class="chat-header">
+                        <h3>💬 Chat with Your Java Code</h3>
+                        <div class="chat-status" id="chatStatus">Ready</div>
+                    </div>
+                    
                     <div class="chat-messages" id="chatMessages">
                         <div class="message ai">
                             <div class="message-content">
-                                Hello! I've processed your document and I'm ready to answer questions about it. What would you like to know?
+                                Hello! I've parsed your Java code and I'm ready to answer questions about it. What would you like to know?
                             </div>
                             <div class="message-time" id="welcomeTime"></div>
                         </div>
@@ -778,17 +902,16 @@
                             <textarea 
                                 id="chatInput" 
                                 class="chat-textarea" 
-                                placeholder="Ask me anything about your document... (Press Enter to send)"
+                                placeholder="Ask me anything about your Java code... (Press Enter to send)"
                                 rows="3"
                             ></textarea>
-                            <button id="chatSendBtn" class="chat-send-btn" onclick="sendChatMessage()">
+                            <button id="chatSendBtn" class="chat-send-btn">
                                 💬
                             </button>
                         </div>
-                        
-                        <button class="upload-new-btn" onclick="showUploadSection()">
-                            📁 Upload New Document
-                        </button>
+                        <div class="chat-debug" id="chatDebug" style="display: none;">
+                            <small>🔍 Intent: <span id="detectedIntent">-</span> | Confidence: <span id="intentConfidence">-</span> | Filter: <span id="metadataFilter">-</span></small>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -833,9 +956,14 @@
             
             const files = e.dataTransfer.files;
             if (files.length > 0) {
-                document.getElementById('fileInput').files = files;
-                displayFileInfo(files);
-                document.getElementById('submitBtn').disabled = false;
+                const file = files[0];
+                if (file.name.toLowerCase().endsWith('.java')) {
+                    document.getElementById('fileInput').files = files;
+                    displayFileInfo(files);
+                    document.getElementById('submitBtn').disabled = false;
+                } else {
+                    showResult('Please drop a Java source file (.java).', 'error');
+                }
             }
         });
         
@@ -845,13 +973,13 @@
             const pageCount = document.getElementById('pageCount');
             const totalSize = document.getElementById('totalSize');
             
-            if (files.length === 1 && files[0].type === 'application/pdf') {
-                docName.textContent = files[0].name.replace('.pdf', '');
-                pageCount.textContent = 'PDF file (will be processed)';
+            if (files.length === 1 && files[0].name.toLowerCase().endsWith('.java')) {
+                docName.textContent = files[0].name.replace('.java', '');
+                pageCount.textContent = 'Java source file (will be parsed with JavaParser)';
                 totalSize.textContent = formatFileSize(files[0].size);
                 fileInfo.style.display = 'block';
             } else {
-                docName.textContent = 'Please select a PDF file';
+                docName.textContent = 'Please select a Java file';
                 pageCount.textContent = '0';
                 totalSize.textContent = '0 Bytes';
                 fileInfo.style.display = 'block';
@@ -938,25 +1066,91 @@
             await loadServiceStats();
             await loadSessionCount();
             
-            // Add keyboard event handler for chat input
-            const chatInput = document.getElementById('chatInput');
-            if (chatInput) {
-                chatInput.addEventListener('keydown', function(event) {
-                    if (event.key === 'Enter' && !event.shiftKey) {
-                        event.preventDefault();
-                        sendChatMessage();
-                    }
-                });
-            }
-            
             // Set welcome message time
             const welcomeTime = document.getElementById('welcomeTime');
             if (welcomeTime) {
                 welcomeTime.textContent = new Date().toLocaleTimeString();
             }
             
+            // Setup initial chat input listeners as backup
+            setupChatInputListeners();
+            
             console.log('✅ Initialization complete');
         };
+
+        // Function to setup chat input event listeners
+        function setupChatInputListeners() {
+            console.log('🔧 Setting up chat input listeners...');
+            
+            const chatInput = document.getElementById('chatInput');
+            const chatSendBtn = document.getElementById('chatSendBtn');
+            
+            console.log('🔍 Chat input element found:', !!chatInput);
+            console.log('🔍 Chat send button found:', !!chatSendBtn);
+            console.log('🔍 Chat input element ID:', chatInput ? chatInput.id : 'NOT_FOUND');
+            console.log('🔍 Chat send button element ID:', chatSendBtn ? chatSendBtn.id : 'NOT_FOUND');
+            
+            if (chatInput) {
+                // Remove any existing listeners to avoid duplicates
+                chatInput.removeEventListener('keydown', handleChatKeyDown);
+                chatInput.removeEventListener('focus', handleChatFocus);
+                
+                // Add the keydown listener
+                chatInput.addEventListener('keydown', handleChatKeyDown);
+                console.log('🎯 Chat input keydown listener added');
+                
+                // Add focus listener for debugging
+                chatInput.addEventListener('focus', handleChatFocus);
+                console.log('🎯 Chat input focus listener added');
+                
+                // Test if the element is actually interactive
+                console.log('🎯 Chat input disabled state:', chatInput.disabled);
+                console.log('🎯 Chat input readonly state:', chatInput.readOnly);
+                console.log('🎯 Chat input style pointer-events:', window.getComputedStyle(chatInput).pointerEvents);
+                
+                console.log('🎯 Chat input keydown listener setup complete');
+            } else {
+                console.error('❌ Chat input element not found!');
+            }
+            
+            if (chatSendBtn) {
+                // Remove any existing listeners to avoid duplicates
+                chatSendBtn.removeEventListener('click', sendChatMessage);
+                
+                // Add the click listener
+                chatSendBtn.addEventListener('click', sendChatMessage);
+                console.log('🎯 Chat send button click listener added');
+                
+                // Test if the button is actually interactive
+                console.log('🎯 Chat send button disabled state:', chatSendBtn.disabled);
+                console.log('🎯 Chat send button style pointer-events:', window.getComputedStyle(chatSendBtn).pointerEvents);
+                
+                console.log('🎯 Chat send button click listener setup complete');
+            } else {
+                console.error('❌ Chat send button element not found!');
+            }
+            
+            // Also add a direct test to see if sendChatMessage is callable
+            console.log('🧪 Testing sendChatMessage function availability:', typeof sendChatMessage);
+            console.log('🧪 Testing handleChatKeyDown function availability:', typeof handleChatKeyDown);
+            console.log('🧪 Testing handleChatFocus function availability:', typeof handleChatFocus);
+        }
+
+        // Handle chat input focus for debugging
+        function handleChatFocus(event) {
+            console.log('🎯 Chat input focused, element:', event.target);
+            console.log('🎯 Chat input value:', event.target.value);
+        }
+
+        // Handle Enter key press in chat input
+        function handleChatKeyDown(event) {
+            console.log('⌨️ Key pressed:', event.key, 'Shift:', event.shiftKey, 'Target:', event.target);
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                console.log('⌨️ Enter key pressed, sending chat message...');
+                sendChatMessage();
+            }
+        }
 
         async function startChatSession() {
             try {
@@ -972,6 +1166,15 @@
                 initialState.style.display = 'none';
                 chatInterface.style.display = 'block';
                 
+                // Disable the left side input section
+                disableInputSection();
+                
+                // Wait a bit for DOM to be ready, then setup listeners
+                setTimeout(() => {
+                    setupChatInputListeners();
+                    console.log('⏰ Delayed setup of chat input listeners completed');
+                }, 100);
+                
                 // Focus on the chat input
                 document.getElementById('chatInput').focus();
                 
@@ -986,17 +1189,50 @@
             }
         }
 
+        function disableInputSection() {
+            const inputSection = document.querySelector('.input-section');
+            
+            // Add disabled class for proper styling
+            inputSection.classList.add('disabled');
+            
+            console.log('🔒 Left side input section disabled');
+        }
+
+        function enableInputSection() {
+            const inputSection = document.querySelector('.input-section');
+            
+            // Remove disabled class to restore normal styling
+            inputSection.classList.remove('disabled');
+            
+            console.log('🔓 Left side input section enabled');
+        }
+
         async function sendChatMessage() {
             const chatInput = document.getElementById('chatInput');
             const message = chatInput.value.trim();
             
+            console.log('💬 sendChatMessage called with message:', message);
+            console.log('💬 Current session ID:', currentSessionId);
+            console.log('💬 API_BASE:', API_BASE);
+            console.log('💬 Chat input element:', chatInput);
+            console.log('💬 Chat input value:', chatInput.value);
+            
             if (!message) {
+                console.log('❌ Message is empty, not sending');
+                return;
+            }
+            
+            if (!currentSessionId) {
+                console.log('❌ No current session ID, cannot send message');
+                addChatMessage('ai', '❌ Error: No active session. Please upload a document first.', true);
                 return;
             }
             
             // Get the selected AI service
             const selectedServiceElement = document.querySelector('.service-option.selected');
             const selectedService = selectedServiceElement ? selectedServiceElement.dataset.service : 'OpenAIChatService';
+            
+            console.log('🤖 Selected AI service:', selectedService);
             
             // Add user message to chat
             addChatMessage('user', message);
@@ -1007,25 +1243,40 @@
             // Show typing indicator
             showTypingIndicator(true);
             
+            // Show debug info
+            showDebugInfo(message);
+            
             try {
+                console.log('📡 Sending request to backend...');
+                
+                const requestBody = {
+                    message: message,
+                    sessionId: currentSessionId,
+                    service: selectedService
+                };
+                
+                console.log('📡 Request body:', requestBody);
+                console.log('📡 Request URL:', `${API_BASE}/chat`);
+                
                 const response = await fetch(`${API_BASE}/chat`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({
-                        message: message,
-                        sessionId: currentSessionId,
-                        service: selectedService
-                    })
+                    body: JSON.stringify(requestBody)
                 });
+                
+                console.log('📡 Response status:', response.status);
+                console.log('📡 Response headers:', response.headers);
                 
                 if (!response.ok) {
                     const errorText = await response.text();
+                    console.error('📡 Error response text:', errorText);
                     throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
                 }
                 
                 const data = await response.json();
+                console.log('📡 Response data:', data);
                 
                 // Hide typing indicator
                 showTypingIndicator(false);
@@ -1038,9 +1289,53 @@
                 }
             } catch (error) {
                 console.error('❌ Error sending chat message:', error);
+                console.error('❌ Error stack:', error.stack);
                 showTypingIndicator(false);
                 addChatMessage('ai', `❌ Error: ${error.message}`, true);
             }
+        }
+
+        function showDebugInfo(message) {
+            const debugSection = document.getElementById('chatDebug');
+            const intentSpan = document.getElementById('detectedIntent');
+            const confidenceSpan = document.getElementById('intentConfidence');
+            const filterSpan = document.getElementById('metadataFilter');
+            
+            // Simple intent detection (matches backend logic)
+            const messageLower = message.toLowerCase();
+            let intent = 'GENERAL';
+            let filter = 'None';
+            
+            if (messageLower.includes('method') || messageLower.includes('methods') || 
+                messageLower.includes('function') || messageLower.includes('functions') ||
+                messageLower.includes('list all method') || messageLower.includes('show methods') ||
+                messageLower.includes('what methods') || messageLower.includes('method names')) {
+                intent = 'METHODS';
+                filter = 'type=method';
+            } else if (messageLower.includes('class') || messageLower.includes('classes') ||
+                messageLower.includes('show class') || messageLower.includes('list class') ||
+                messageLower.includes('what class') || messageLower.includes('class names')) {
+                intent = 'CLASSES';
+                filter = 'type=class';
+            } else if (messageLower.includes('field') || messageLower.includes('fields') ||
+                messageLower.includes('variable') || messageLower.includes('variables')) {
+                intent = 'FIELDS';
+                filter = 'type=field';
+            } else if (messageLower.includes('constructor') || messageLower.includes('constructors')) {
+                intent = 'CONSTRUCTORS';
+                filter = 'type=constructor';
+            } else if (messageLower.includes('package') || messageLower.includes('packages')) {
+                intent = 'PACKAGES';
+                filter = 'type=package';
+            } else if (messageLower.includes('import') || messageLower.includes('imports')) {
+                intent = 'IMPORTS';
+                filter = 'type=imports';
+            }
+            
+            intentSpan.textContent = intent;
+            confidenceSpan.textContent = 'Frontend Detection'; // Show that this is frontend intent detection
+            filterSpan.textContent = filter;
+            debugSection.style.display = 'block';
         }
 
         function addChatMessage(type, content, isError = false) {
@@ -1054,7 +1349,9 @@
                 messageContent.style.background = '#ffebee';
                 messageContent.style.color = '#c62828';
             }
-            messageContent.textContent = content;
+            
+            // Parse markdown and format the content
+            messageContent.innerHTML = parseMarkdown(content);
             
             const messageTime = document.createElement('div');
             messageTime.className = 'message-time';
@@ -1078,8 +1375,49 @@
             }
         }
 
+        // Markdown parser function for better formatting
+        function parseMarkdown(text) {
+            if (!text) return '';
+            
+            let html = text;
+            
+            // Convert code blocks (```language ... ```)
+            html = html.replace(/```(\w+)?\n([\s\S]*?)```/g, function(match, language, code) {
+                const lang = language || 'text';
+                const highlightedCode = hljs.highlight(code.trim(), {language: lang}).value;
+                return `<pre><code class="hljs language-${lang}">${highlightedCode}</code></pre>`;
+            });
+            
+            // Convert inline code (`code`)
+            html = html.replace(/`([^`]+)`/g, '<code class="inline-code">$1</code>');
+            
+            // Convert bold (**text**)
+            html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+            
+            // Convert italic (*text*)
+            html = html.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+            
+            // Convert headers (# Header)
+            html = html.replace(/^### (.*$)/gm, '<h3>$1</h3>');
+            html = html.replace(/^## (.*$)/gm, '<h2>$1</h2>');
+            html = html.replace(/^# (.*$)/gm, '<h1>$1</h1>');
+            
+            // Convert lists
+            html = html.replace(/^\* (.*$)/gm, '<li>$1</li>');
+            html = html.replace(/^- (.*$)/gm, '<li>$1</li>');
+            html = html.replace(/^(\d+)\. (.*$)/gm, '<li>$2</li>');
+            
+            // Wrap lists in ul/ol tags
+            html = html.replace(/(<li>.*<\/li>)/gs, '<ul>$1</ul>');
+            
+            // Convert line breaks
+            html = html.replace(/\n/g, '<br>');
+            
+            return html;
+        }
+
         function showTypingIndicator(show) {
-            const typingIndicator = document.querySelector('.typing-indicator');
+            let typingIndicator = document.querySelector('.typing-indicator');
             if (!typingIndicator) {
                 // Create typing indicator if it doesn't exist
                 const chatMessages = document.getElementById('chatMessages');
@@ -1094,6 +1432,9 @@
                     <span>AI is typing...</span>
                 `;
                 chatMessages.appendChild(indicator);
+                
+                // Update the reference to the newly created element
+                typingIndicator = indicator;
             }
             
             if (show) {
@@ -1104,7 +1445,18 @@
         }
 
         function showResult(message, type) {
+            // Only show result in initialState if chat interface is not active
+            const chatInterface = document.getElementById('chatInterface');
             const initialState = document.getElementById('initialState');
+            
+            if (chatInterface.style.display === 'block') {
+                // Chat interface is active, show result as a chat message instead
+                console.log('💬 Chat interface active, showing result as chat message:', message);
+                addChatMessage('ai', message, type === 'error');
+                return;
+            }
+            
+            // Chat interface not active, show in initialState
             if (type === 'error') {
                 initialState.innerHTML = `<div style="color: #dc3545; text-align: center; padding: 20px;">${message}</div>`;
             } else if (type === 'success') {
@@ -1112,37 +1464,6 @@
             } else {
                 initialState.innerHTML = `<div style="text-align: center; padding: 20px;">${message}</div>`;
             }
-        }
-
-        function showUploadSection() {
-            // Show initial state and hide chat interface
-            const initialState = document.getElementById('initialState');
-            const chatInterface = document.getElementById('chatInterface');
-            
-            initialState.style.display = 'block';
-            chatInterface.style.display = 'none';
-            
-            // Clear file input and info
-            document.getElementById('fileInput').value = '';
-            document.getElementById('fileInfo').style.display = 'none';
-            document.getElementById('submitBtn').disabled = true;
-            
-            // Clear chat messages
-            const chatMessages = document.getElementById('chatMessages');
-            chatMessages.innerHTML = `
-                <div class="message ai">
-                    <div class="message-content">
-                        Hello! I've processed your document and I'm ready to answer questions about it. What would you like to know?
-                    </div>
-                    <div class="message-time">${new Date().toLocaleTimeString()}</div>
-                </div>
-            `;
-            
-            // Clear current session
-            currentSessionId = null;
-            updateSessionDisplay();
-            
-            showResult('Please upload a new document PDF to start a new chat session.', 'info');
         }
 
         // Session Management Functions
@@ -1165,8 +1486,8 @@
                     await loadSessionCount();
                     console.log('✅ Session cleared successfully');
                     
-                    // Show upload section and hide chat interface
-                    showUploadSection();
+                    // Reset UI to initial state
+                    resetToInitialState();
                     
                     showResult('🗑️ Conversation ended successfully. You can start a new conversation above.', 'success');
                 } else {
@@ -1194,8 +1515,8 @@
                     await loadSessionCount();
                     console.log('✅ All sessions cleared successfully');
                     
-                    // Show upload section and hide chat interface
-                    showUploadSection();
+                    // Reset UI to initial state
+                    resetToInitialState();
                     
                     showResult(`💥 All conversations cleared successfully. Cleared ${data.activeSessionCount} conversations. You can start a new conversation above.`, 'success');
                 } else {
@@ -1205,8 +1526,45 @@
                 }
             } catch (error) {
                 console.error('❌ Error clearing all sessions:', error);
-                showResult(`❌ Error clearing all sessions: ${error.message}`, 'error');
+                showResult(`💥 Error clearing all sessions: ${error.message}`, 'error');
             }
+        }
+
+        function resetToInitialState() {
+            // Show initial state and hide chat interface
+            const initialState = document.getElementById('initialState');
+            const chatInterface = document.getElementById('chatInterface');
+            
+            initialState.style.display = 'block';
+            chatInterface.style.display = 'none';
+            
+            // Re-enable the left side input section
+            enableInputSection();
+            
+            // Clear file input and info
+            document.getElementById('fileInput').value = '';
+            document.getElementById('fileInfo').style.display = 'none';
+            document.getElementById('submitBtn').disabled = true;
+            
+            // Clear chat messages
+            const chatMessages = document.getElementById('chatMessages');
+            chatMessages.innerHTML = `
+                <div class="message ai">
+                    <div class="message-content">
+                        Hello! I've parsed your Java code and I'm ready to answer questions about it. What would you like to know?
+                    </div>
+                    <div class="message-time">${new Date().toLocaleTimeString()}</div>
+                </div>
+            `;
+            
+            // Clear current session
+            currentSessionId = null;
+            updateSessionDisplay();
+            
+            // Setup chat input listeners for next session
+            setupChatInputListeners();
+            
+            showResult('Please upload a new Java source file to start a new chat session.', 'info');
         }
 
         function updateSessionDisplay() {
@@ -1235,12 +1593,12 @@
             const file = fileInput.files[0];
             
             if (!file) {
-                showResult('Please select a PDF file first.', 'error');
+                showResult('Please select a Java file first.', 'error');
                 return;
             }
             
-            if (file.type !== 'application/pdf') {
-                showResult('Please select a PDF file.', 'error');
+            if (!file.name.toLowerCase().endsWith('.java')) {
+                showResult('Please select a Java source file (.java).', 'error');
                 return;
             }
             
@@ -1269,10 +1627,13 @@
                 const result = await response.json();
                 
                 if (result.success) {
-                    showResult(`✅ Document processed successfully!<br>
+                    showResult(`✅ Java file processed successfully!<br>
                         <strong>Document ID:</strong> ${result.documentId}<br>
                         <strong>Session ID:</strong> ${currentSessionId}<br>
-                        <strong>Segments Processed:</strong> ${result.segmentsProcessed}<br>
+                        <strong>Package:</strong> ${result.metadata?.package || 'default'}<br>
+                        <strong>Classes Found:</strong> ${result.metadata?.classes || 'N/A'}<br>
+                        <strong>Methods Found:</strong> ${result.metadata?.methods || 'N/A'}<br>
+                        <strong>Total Code Lines:</strong> ${result.metadata?.codeLines || 'N/A'}<br>
                         <strong>Total Size:</strong> ${formatFileSize(result.fileSize)}`, 'success');
                     
                     // Reset form
@@ -1298,6 +1659,34 @@
                 showLoading(false);
             }
         }
+
+        // Global test function for debugging (can be called from console)
+        window.testChatDebug = function() {
+            console.log('🧪 === CHAT DEBUG TEST ===');
+            console.log('🧪 Current session ID:', currentSessionId);
+            console.log('🧪 API_BASE:', API_BASE);
+            console.log('🧪 Chat input element:', document.getElementById('chatInput'));
+            console.log('🧪 Chat send button element:', document.getElementById('chatSendBtn'));
+            console.log('🧪 sendChatMessage function:', typeof sendChatMessage);
+            console.log('🧪 handleChatKeyDown function:', typeof handleChatKeyDown);
+            console.log('🧪 handleChatFocus function:', typeof handleChatFocus);
+            
+            // Test if elements are interactive
+            const chatInput = document.getElementById('chatInput');
+            if (chatInput) {
+                console.log('🧪 Chat input disabled:', chatInput.disabled);
+                console.log('🧪 Chat input readonly:', chatInput.readOnly);
+                console.log('🧪 Chat input pointer-events:', window.getComputedStyle(chatInput).pointerEvents);
+            }
+            
+            const chatSendBtn = document.getElementById('chatSendBtn');
+            if (chatSendBtn) {
+                console.log('🧪 Chat send button disabled:', chatSendBtn.disabled);
+                console.log('🧪 Chat send button pointer-events:', window.getComputedStyle(chatSendBtn).pointerEvents);
+            }
+            
+            console.log('🧪 === END CHAT DEBUG TEST ===');
+        };
     </script>
 </body>
 </html> 

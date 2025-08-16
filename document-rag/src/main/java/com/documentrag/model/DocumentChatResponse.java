@@ -3,6 +3,7 @@ package com.documentrag.model;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.Builder;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -10,6 +11,7 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class DocumentChatResponse {
     
     private boolean success;
@@ -21,9 +23,4 @@ public class DocumentChatResponse {
     private List<String> sources;
     private LocalDateTime timestamp = LocalDateTime.now();
     private List<DocumentChatRequest.ChatMessage> conversationHistory;
-    
-    public DocumentChatResponse(boolean success, String message) {
-        this.success = success;
-        this.message = message;
-    }
 } 
