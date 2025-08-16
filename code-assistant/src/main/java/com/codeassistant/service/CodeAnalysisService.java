@@ -6,6 +6,7 @@ import com.codeassistant.model.StreamingAnalysisResponse;
 import com.codeassistant.service.ai.AIChatService;
 import com.codeassistant.service.ai.AIServiceException;
 import com.codeassistant.service.factory.AIServiceFactory;
+import com.common.service.SessionManager;
 import dev.langchain4j.memory.ChatMemory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -867,6 +867,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
     <script>
         const API_BASE = window.location.origin + '/api/v1/code';
+        const SESSION_API_BASE = window.location.origin + '/api/v1/sessions';
         let availableServices = [];
         let currentSessionId = null;
         let messageCounter = 0;
@@ -916,7 +917,7 @@
         async function createNewSession() {
             console.log('🆕 Creating new session...');
             try {
-                const response = await fetch(`${API_BASE}/sessions`, {
+                const response = await fetch(`${SESSION_API_BASE}`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -949,7 +950,7 @@
             
             console.log('🗑️ Clearing current session:', currentSessionId);
             try {
-                const response = await fetch(`${API_BASE}/sessions/${currentSessionId}`, {
+                const response = await fetch(`${SESSION_API_BASE}/${currentSessionId}`, {
                     method: 'DELETE'
                 });
                 
@@ -980,7 +981,7 @@
         async function clearAllSessions() {
             console.log('💥 Clearing all sessions...');
             try {
-                const response = await fetch(`${API_BASE}/sessions`, {
+                const response = await fetch(`${SESSION_API_BASE}`, {
                     method: 'DELETE'
                 });
                 
@@ -1998,7 +1999,7 @@
         async function loadSessionCount() {
             console.log('📊 Loading session count...');
             try {
-                const response = await fetch(`${API_BASE}/sessions/stats`);
+                const response = await fetch(`${SESSION_API_BASE}/stats`);
                 if (response.ok) {
                     const data = await response.json();
                     const sessionCount = data.activeSessionCount || 0;

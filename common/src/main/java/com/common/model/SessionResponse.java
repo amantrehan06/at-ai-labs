@@ -1,4 +1,4 @@
-package com.codeassistant.model;
+package com.common.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;

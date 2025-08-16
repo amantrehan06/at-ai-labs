@@ -11,6 +11,12 @@ This application uses a **hybrid approach** for API key management:
 ### API Keys (Required)
 - `OPENAI_API_KEY` - Your OpenAI API key
 - `GROK_API_KEY` - Your Groq API key
+- `PINECONE_API_KEY` - Your Pinecone API key
+
+### Pinecone Configuration (Required for Document RAG)
+- `PINECONE_ENVIRONMENT` - Your Pinecone environment (e.g., "us-west1-gcp")
+- `PINECONE_PROJECT_ID` - Your Pinecone project ID
+- `PINECONE_INDEX_NAME` - Your Pinecone index name
 
 ## Running Locally
 
@@ -19,6 +25,10 @@ Set these in your IDE's VM options:
 ```
 -DOPENAI_API_KEY="your-openai-api-key"
 -DGROK_API_KEY="your-grok-api-key"
+-DPINECONE_API_KEY="your-pinecone-api-key"
+-DPINECONE_ENVIRONMENT="your-pinecone-environment"
+-DPINECONE_PROJECT_ID="your-pinecone-project-id"
+-DPINECONE_INDEX_NAME="your-pinecone-index-name"
 ```
 
 ### Option 2: Environment Variables

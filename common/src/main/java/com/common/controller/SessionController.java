@@ -1,7 +1,7 @@
-package com.codeassistant.controller;
+package com.common.controller;
 
-import com.codeassistant.model.SessionResponse;
-import com.codeassistant.service.SessionManager;
+import com.common.model.SessionResponse;
+import com.common.service.SessionManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,7 +16,7 @@ import java.util.Map;
  * Provides endpoints for creating, clearing, and managing chat sessions.
  */
 @RestController
-@RequestMapping("/api/v1/code")
+@RequestMapping("/api/v1/sessions")
 @CrossOrigin(origins = "*")
 public class SessionController {
     
@@ -32,7 +32,7 @@ public class SessionController {
     /**
      * Create a new session
      */
-    @PostMapping("/sessions")
+    @PostMapping
     public ResponseEntity<SessionResponse> createSession() {
         try {
             String sessionId = sessionManager.createSession();
@@ -59,7 +59,7 @@ public class SessionController {
     /**
      * Clear a specific session
      */
-    @DeleteMapping("/sessions/{sessionId}")
+    @DeleteMapping("/{sessionId}")
     public ResponseEntity<SessionResponse> clearSession(@PathVariable("sessionId") String sessionId) {
         try {
             boolean cleared = sessionManager.clearSession(sessionId);
@@ -83,7 +83,6 @@ public class SessionController {
         } catch (Exception e) {
             logger.error("Error clearing session: {}", sessionId, e);
             SessionResponse errorResponse = SessionResponse.builder()
-                .sessionId(sessionId)
                 .message("Error clearing session: " + e.getMessage())
                 .success(false)
                 .activeSessionCount(sessionManager.getActiveSessionCount())
@@ -95,7 +94,7 @@ public class SessionController {
     /**
      * Clear all sessions
      */
-    @DeleteMapping("/sessions")
+    @DeleteMapping
     public ResponseEntity<SessionResponse> clearAllSessions() {
         try {
             int clearedCount = sessionManager.clearAllSessions();
@@ -119,7 +118,7 @@ public class SessionController {
     /**
      * Get session statistics
      */
-    @GetMapping("/sessions/stats")
+    @GetMapping("/stats")
     public ResponseEntity<Map<String, Object>> getSessionStats() {
         Map<String, Object> stats = Map.of(
             "activeSessionCount", sessionManager.getActiveSessionCount(),
